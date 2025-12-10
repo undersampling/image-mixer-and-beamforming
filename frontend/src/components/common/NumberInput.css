@@ -1,0 +1,19 @@
+.number-input-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.number-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.number-input-wrapper .input {
+  flex: 1;
+}
+
+.input-unit {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+

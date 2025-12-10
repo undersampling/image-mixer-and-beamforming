@@ -1,0 +1,41 @@
+{
+  "id": "ultrasound_imaging",
+  "name": "Medical Ultrasound Probe",
+  "description": "Curved phased array for medical ultrasound imaging. Demonstrates focusing at different depths in soft tissue.",
+  "category": "medical",
+  
+  "medium": {
+    "name": "soft_tissue",
+    "speed": 1540
+  },
+  
+  "visualization": {
+    "x_range": [-0.05, 0.05],
+    "y_range": [0, 0.1],
+    "resolution": 150
+  },
+  
+  "arrays": [
+    {
+      "id": "probe_array",
+      "name": "Ultrasound Probe",
+      "type": "curved",
+      "num_elements": 64,
+      "element_spacing": 0.0003,
+      "curvature_radius": 0.04,
+      "arc_angle": 60,
+      "frequencies": [5000000],
+      "steering_angle": 0,
+      "focus_point": {"x": 0, "y": 0.05},
+      "position": {"x": 0, "y": 0},
+      "rotation": 0
+    }
+  ],
+  
+  "metadata": {
+    "author": "System",
+    "version": "1.0",
+    "tags": ["ultrasound", "medical", "imaging", "curved array"]
+  }
+}
+

@@ -1,0 +1,17 @@
+.slider-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.slider-value {
+  color: var(--color-primary-1);
+  font-weight: 600;
+}
+

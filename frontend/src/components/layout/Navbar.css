@@ -1,0 +1,55 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: linear-gradient(180deg, #1e293b, #0f172a);
+  color: var(--color-text-on-dark);
+  box-shadow: var(--shadow-md);
+  border-bottom: 2px solid var(--color-primary-1);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.navbar-logo {
+  font-size: 1.5rem;
+}
+
+.navbar-tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.navbar-tab {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: transparent;
+  color: var(--color-text-on-dark);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.navbar-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-tab.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.active-indicator {
+  color: var(--color-accent-amber);
+}
+

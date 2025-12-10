@@ -1,0 +1,47 @@
+.interference-map {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.interference-map h3 {
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-primary);
+}
+
+.canvas-container {
+  border: 1px solid var(--color-bg-hover);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: var(--spacing-md);
+  background: #0f172a;
+}
+
+.canvas-container canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.color-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.legend-gradient {
+  flex: 1;
+  height: 20px;
+  background: linear-gradient(
+    to right,
+    #0f172a,
+    #22d3ee,
+    #10b981,
+    #fbbf24,
+    #ef4444
+  );
+  border-radius: var(--radius-sm);
+}

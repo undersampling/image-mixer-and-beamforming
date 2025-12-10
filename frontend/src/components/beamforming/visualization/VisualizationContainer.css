@@ -1,0 +1,38 @@
+.visualization-container {
+  padding: var(--spacing-sm);
+}
+
+.visualization-container.loading,
+.visualization-container.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: var(--color-text-secondary);
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.viz-item {
+  min-height: 150px;
+}
+
+.viz-item.full-width {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1024px) {
+  .viz-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .viz-item.full-width {
+    grid-column: 1;
+  }
+}
+

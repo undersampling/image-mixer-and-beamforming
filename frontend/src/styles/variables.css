@@ -1,0 +1,49 @@
+:root {
+  /* Primary Gradient - Emerald/Teal theme */
+  --color-primary-1: #10b981;
+  --color-primary-2: #14b8a6;
+  --color-primary-3: #06d6a0;
+
+  /* Accent Colors */
+  --color-accent-pink: #f472b6;
+  --color-accent-emerald: #34d399;
+  --color-accent-amber: #fbbf24;
+  --color-accent-coral: #f87171;
+
+  /* Backgrounds - Dark theme */
+  --color-bg-main: #0f172a;
+  --color-bg-card: #1e293b;
+  --color-bg-hover: #334155;
+  --color-sidebar-start: #0f172a;
+  --color-sidebar-end: #1e293b;
+
+  /* Heatmap Colors - Scientific visualization */
+  --color-heatmap-1: #0f172a;
+  --color-heatmap-2: #22d3ee;
+  --color-heatmap-3: #10b981;
+  --color-heatmap-4: #fbbf24;
+  --color-heatmap-5: #ef4444;
+
+  /* Text */
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-light: #64748b;
+  --color-text-on-dark: #ffffff;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}

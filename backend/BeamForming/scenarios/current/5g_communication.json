@@ -1,0 +1,39 @@
+{
+  "id": "5g_communication",
+  "name": "5G Base Station",
+  "description": "Massive MIMO array for 5G mmWave wireless communication. Demonstrates beam steering for mobile user tracking.",
+  "category": "wireless",
+  
+  "medium": {
+    "name": "air",
+    "speed": 343
+  },
+  
+  "visualization": {
+    "x_range": [-2, 2],
+    "y_range": [0, 5],
+    "resolution": 150
+  },
+  
+  "arrays": [
+    {
+      "id": "main_array",
+      "name": "Base Station Array",
+      "type": "linear",
+      "num_elements": 32,
+      "element_spacing": 0.05,
+      "frequencies": [3000, 5000, 7000],
+      "steering_angle": 15,
+      "focus_point": null,
+      "position": {"x": 0, "y": 0},
+      "rotation": 0
+    }
+  ],
+  
+  "metadata": {
+    "author": "System",
+    "version": "1.0",
+    "tags": ["5G", "MIMO", "wireless", "beam steering"]
+  }
+}
+

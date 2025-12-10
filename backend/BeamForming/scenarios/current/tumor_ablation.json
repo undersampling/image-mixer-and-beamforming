@@ -1,0 +1,55 @@
+{
+  "id": "tumor_ablation",
+  "name": "HIFU Tumor Ablation",
+  "description": "High Intensity Focused Ultrasound system with multiple arrays converging on a tumor target for non-invasive ablation.",
+  "category": "medical",
+  
+  "medium": {
+    "name": "soft_tissue",
+    "speed": 1540
+  },
+  
+  "visualization": {
+    "x_range": [-0.08, 0.08],
+    "y_range": [0, 0.12],
+    "resolution": 150
+  },
+  
+  "arrays": [
+    {
+      "id": "left_transducer",
+      "name": "Left Transducer",
+      "type": "curved",
+      "num_elements": 48,
+      "element_spacing": 0.002,
+      "curvature_radius": 0.06,
+      "arc_angle": 40,
+      "frequencies": [1000000],
+      "steering_angle": 0,
+      "focus_point": {"x": 0, "y": 0.07},
+      "position": {"x": -0.04, "y": 0},
+      "rotation": 25
+    },
+    {
+      "id": "right_transducer",
+      "name": "Right Transducer",
+      "type": "curved",
+      "num_elements": 48,
+      "element_spacing": 0.002,
+      "curvature_radius": 0.06,
+      "arc_angle": 40,
+      "frequencies": [1000000],
+      "steering_angle": 0,
+      "focus_point": {"x": 0, "y": 0.07},
+      "position": {"x": 0.04, "y": 0},
+      "rotation": -25
+    }
+  ],
+  
+  "metadata": {
+    "author": "System",
+    "version": "1.0",
+    "tags": ["HIFU", "tumor", "ablation", "multiple arrays", "medical"]
+  }
+}
+

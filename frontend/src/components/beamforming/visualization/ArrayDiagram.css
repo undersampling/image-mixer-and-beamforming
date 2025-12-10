@@ -1,0 +1,24 @@
+.array-diagram {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.array-diagram h3 {
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-primary);
+}
+
+.array-diagram .canvas-container {
+  border: 1px solid var(--color-bg-hover);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: white;
+}
+
+.array-diagram .canvas-container canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}

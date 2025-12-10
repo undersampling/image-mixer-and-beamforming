@@ -1,0 +1,17 @@
+.sidebar {
+  width: 350px;
+  background: var(--color-bg-card);
+  border-right: 2px solid var(--color-primary-1);
+  overflow-y: auto;
+  height: calc(100vh - 70px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary-1) var(--color-bg-main);
+}
+
+.sidebar-content {
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
