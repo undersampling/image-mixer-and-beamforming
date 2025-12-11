@@ -1,15 +1,24 @@
-import React from 'react';
-import '../../styles/components.css';
-import './Slider.css';
+import React from "react";
+import "../../styles/components.css";
+import "../../styles/Slider.css";
 
-export function Slider({ label, value, onChange, min, max, step = 1, unit = '' }) {
+export function Slider({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+  unit = "",
+}) {
   return (
     <div className="slider-group">
       {label && (
         <div className="slider-label">
           <span>{label}</span>
           <span className="slider-value">
-            {value}{unit}
+            {value}
+            {unit}
           </span>
         </div>
       )}
@@ -25,4 +34,3 @@ export function Slider({ label, value, onChange, min, max, step = 1, unit = '' }
     </div>
   );
 }
-

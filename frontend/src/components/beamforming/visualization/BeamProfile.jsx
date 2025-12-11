@@ -9,7 +9,8 @@ import {
   Legend,
 } from "chart.js";
 import { Radar } from "react-chartjs-2";
-import "./BeamProfile.css";
+import "../../../styles/BeamProfile.css";
+
 
 ChartJS.register(
   RadialLinearScale,
@@ -24,7 +25,7 @@ export function BeamProfile({ data, arrays }) {
   if (!data || !data.angles) return <div className="no-data">No Data</div>;
 
   const datasets = [];
-  
+
   // 1. Combined Pattern (The most important one)
   if (data.combined) {
     datasets.push({
@@ -68,9 +69,9 @@ export function BeamProfile({ data, arrays }) {
       r: {
         angleLines: { color: "#334155" }, // Dark grid lines
         grid: { color: "#334155" },
-        pointLabels: { 
+        pointLabels: {
           color: "#94a3b8", // Light text
-          font: { size: 10 } 
+          font: { size: 10 },
         },
         ticks: { display: false }, // Hide scale numbers (clutter)
       },
@@ -79,11 +80,11 @@ export function BeamProfile({ data, arrays }) {
       legend: {
         position: "top",
         align: "end",
-        labels: { 
+        labels: {
           color: "#cbd5e1",
           boxWidth: 8,
-          font: { size: 10 }
-        }
+          font: { size: 10 },
+        },
       },
       tooltip: {
         backgroundColor: "#1e293b",
@@ -91,13 +92,16 @@ export function BeamProfile({ data, arrays }) {
         bodyColor: "#cbd5e1",
         borderColor: "#475569",
         borderWidth: 1,
-      }
+      },
     },
-    animation: { duration: 0 } // Disable animation for real-time performance
+    animation: { duration: 0 }, // Disable animation for real-time performance
   };
 
   return (
-    <div className="beam-profile-container" style={{ width: '100%', height: '100%' }}>
+    <div
+      className="beam-profile-container"
+      style={{ width: "100%", height: "100%" }}
+    >
       <Radar data={{ labels, datasets }} options={options} />
     </div>
   );

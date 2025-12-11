@@ -1,8 +1,9 @@
 .interference-map {
-  background: #1e293b; /* Slate-800 */
+  background: #1e293b;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border: 1px solid #334155;
   color: #f8fafc;
   display: flex;
@@ -25,40 +26,34 @@
   letter-spacing: 0.025em;
 }
 
-/* Update .canvas-wrapper in InterferenceMap.css */
-
 .canvas-wrapper {
   position: relative;
   width: 100%;
-  height: 100%; /* Fill the parent container */
+  height: 100%;
   background: #000;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #475569;
   cursor: crosshair;
-  /* Flexbox centers the canvas if aspect ratios don't match */
   display: flex;
-  align-items: center; 
+  align-items: center;
   justify-content: center;
 }
 
 canvas {
   display: block;
-  /* Use "contain" logic for canvas so it doesn't stretch weirdly */
   max-width: 100%;
   max-height: 100%;
   width: auto;
   height: auto;
-  image-rendering: pixelated; 
+  image-rendering: pixelated;
 }
 
-/* Ensure the main container fills height if needed */
 .interference-map {
-  /* ... existing styles ... */
-  height: 100%; /* crucial */
-  box-sizing: border-box; /* ensures padding doesn't add to width */
+  height: 100%;
+  box-sizing: border-box;
 }
-/* Overlay labels for axes */
+
 .axis-label {
   position: absolute;
   font-size: 0.75rem;
@@ -70,10 +65,26 @@ canvas {
   border-radius: 4px;
 }
 
-.axis-x-start { bottom: 8px; left: 8px; }
-.axis-x-end { bottom: 8px; right: 8px; }
-.axis-y-start { bottom: 8px; left: 8px; transform: rotate(-90deg); transform-origin: bottom left; }
-.axis-y-end { top: 8px; left: 8px; transform: rotate(-90deg); transform-origin: top left; }
+.axis-x-start {
+  bottom: 8px;
+  left: 8px;
+}
+.axis-x-end {
+  bottom: 8px;
+  right: 8px;
+}
+.axis-y-start {
+  bottom: 8px;
+  left: 8px;
+  transform: rotate(-90deg);
+  transform-origin: bottom left;
+}
+.axis-y-end {
+  top: 8px;
+  left: 8px;
+  transform: rotate(-90deg);
+  transform-origin: top left;
+}
 
 .map-footer {
   display: flex;
@@ -98,19 +109,18 @@ canvas {
   font-family: monospace;
 }
 
-/* Professional "Magma" style gradient */
 .legend-gradient {
   height: 12px;
   width: 100%;
   border-radius: 6px;
   background: linear-gradient(
     to right,
-    #000004, /* Black */
-    #3b0f70, /* Dark Purple */
-    #8c2981, /* Purple */
-    #de4968, /* Red/Pink */
-    #fe9f6d, /* Orange */
-    #fcfdbf  /* White/Yellow */
+    #000004,
+    #3b0f70,
+    #8c2981,
+    #de4968,
+    #fe9f6d,
+    #fcfdbf
   );
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }

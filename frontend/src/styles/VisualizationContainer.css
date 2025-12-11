@@ -1,29 +1,26 @@
 .visualization-container {
   /* Fix container to viewport height minus header/padding (approx) */
-  height: calc(100vh - 120px); 
-  min-height: 600px; /* Prevent squashing on very small screens */
+  height: calc(100vh - 120px);
+  min-height: 600px;
   padding: 0;
-  overflow: hidden; /* Prevent scrolling */
+  overflow: hidden;
 }
 
 .viz-grid {
   display: grid;
-  grid-template-columns: 3fr 2fr; /* 60% Map, 40% Instruments */
+  grid-template-columns: 3fr 2fr;
   grid-template-rows: 100%;
   gap: 16px;
   height: 100%;
 }
 
-/* LEFT COLUMN: Map */
 .viz-item.main-stage {
   grid-column: 1;
   grid-row: 1;
-  height: 100%; /* Fill entire left side */
-  /* Remove min-height caps, let grid control it */
-  min-height: 0; 
+  height: 100%;
+  min-height: 0;
 }
 
-/* RIGHT COLUMN: Container for stacked instruments */
 .instruments-column {
   display: flex;
   flex-direction: column;
@@ -32,20 +29,19 @@
 }
 
 .viz-item.instrument {
-  flex: 1; /* Each takes 50% height */
-  min-height: 0; /* Allow shrinking */
-  position: relative; /* For canvas absolute positioning */
+  flex: 1;
+  min-height: 0;
+  position: relative;
 }
 
-/* Card Styling Update */
 .viz-item {
-  background: #0f172a; /* Darker Slate */
+  background: #0f172a;
   border: 1px solid #334155;
   border-radius: 8px;
   padding: 16px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .viz-item h3 {
@@ -57,7 +53,6 @@
   font-weight: 600;
 }
 
-/* Responsive: Stack vertically on tablet/mobile */
 @media (max-width: 1024px) {
   .visualization-container {
     height: auto;

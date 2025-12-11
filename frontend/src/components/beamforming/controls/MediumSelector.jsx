@@ -39,7 +39,7 @@ export function MediumSelector() {
   }));
 
   return (
-    <Card title="🌊 Propagation Medium">
+    <Card title=" Propagation Medium">
       <Toggle
         label="Custom Speed"
         checked={useCustom}

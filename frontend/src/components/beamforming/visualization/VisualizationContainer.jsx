@@ -4,7 +4,7 @@ import { InterferenceMap } from "./InterferenceMap";
 import { BeamProfile } from "./BeamProfile";
 import { ArrayDiagram } from "./ArrayDiagram";
 import { LoadingSpinner } from "../../common/LoadingSpinner";
-import "./VisualizationContainer.css";
+import "../../../styles/VisualizationContainer.css";
 
 export function VisualizationContainer() {
   const { results, config, loading, initializing } = useSimulator();
@@ -13,7 +13,10 @@ export function VisualizationContainer() {
     return (
       <div className="visualization-container loading">
         <LoadingSpinner />
-        <p style={{marginTop: '1rem', color: '#64748b'}}>Calculating physics...</p>
+        <p style={{  color: "#64748b" }}>
+          
+          Calculating physics...
+        </p>
       </div>
     );
   }
@@ -48,13 +51,9 @@ export function VisualizationContainer() {
 
         {/* RIGHT: Stacked Instruments */}
         <div className="instruments-column">
-          
           <div className="viz-item instrument">
             <h3>Beam Pattern (Far Field)</h3>
-            <BeamProfile 
-              data={results.beam_profiles} 
-              arrays={config.arrays} 
-            />
+            <BeamProfile data={results.beam_profiles} arrays={config.arrays} />
           </div>
 
           <div className="viz-item instrument">
@@ -64,7 +63,6 @@ export function VisualizationContainer() {
               config={config}
             />
           </div>
-          
         </div>
       </div>
     </div>

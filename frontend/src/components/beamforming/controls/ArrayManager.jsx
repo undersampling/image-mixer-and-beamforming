@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { useSimulator } from '../../../context/SimulatorContext';
-import { Card } from '../../common/Card';
-import { Button } from '../../common/Button';
-import { Slider } from '../../common/Slider';
-import { NumberInput } from '../../common/NumberInput';
-import { Toggle } from '../../common/Toggle';
-import { Dropdown } from '../../common/Dropdown';
-import './ArrayManager.css';
+import React, { useState } from "react";
+import { useSimulator } from "../../../context/SimulatorContext";
+import { Card } from "../../common/Card";
+import { Button } from "../../common/Button";
+import { Slider } from "../../common/Slider";
+import { NumberInput } from "../../common/NumberInput";
+import { Toggle } from "../../common/Toggle";
+import { Dropdown } from "../../common/Dropdown";
+import "../../../styles/ArrayManager.css";
 
 export function ArrayManager() {
   const { config, updateArray, addArray, removeArray } = useSimulator();
@@ -19,7 +19,7 @@ export function ArrayManager() {
     addArray({
       id: newId,
       name: `Array ${config.arrays.length + 1}`,
-      type: 'linear',
+      type: "linear",
       num_elements: 16,
       element_spacing: 0.05,
       frequencies: [5000],
@@ -36,21 +36,27 @@ export function ArrayManager() {
   };
 
   return (
-    <Card title="📡 Phased Arrays">
-      <Button variant="primary" onClick={handleAddArray} style={{ marginBottom: '1rem', width: '100%' }}>
+    <Card title=" Phased Arrays">
+      <Button
+        variant="primary"
+        onClick={handleAddArray}
+        style={{ marginBottom: "1rem", width: "100%" }}
+      >
         + Add Array
       </Button>
-      
+
       {config.arrays.map((array, idx) => (
         <ArrayConfig
           key={array.id}
           array={array}
           index={idx}
           isExpanded={expandedArray === array.id}
-          onExpand={() => setExpandedArray(expandedArray === array.id ? null : array.id)}
+          onExpand={() =>
+            setExpandedArray(expandedArray === array.id ? null : array.id)
+          }
           onChange={(updates) => handleArrayChange(array.id, updates)}
           onDelete={() => {
-            if (window.confirm('Delete this array?')) {
+            if (window.confirm("Delete this array?")) {
               removeArray(array.id);
               if (expandedArray === array.id) {
                 setExpandedArray(null);
@@ -63,14 +69,28 @@ export function ArrayManager() {
   );
 }
 
-function ArrayConfig({ array, index, isExpanded, onExpand, onChange, onDelete }) {
-  const [freqMode, setFreqMode] = useState(Array.isArray(array.frequencies) && array.frequencies.length > 1 ? 'range' : 'individual');
+function ArrayConfig({
+  array,
+  index,
+  isExpanded,
+  onExpand,
+  onChange,
+  onDelete,
+}) {
+  const [freqMode, setFreqMode] = useState(
+    Array.isArray(array.frequencies) && array.frequencies.length > 1
+      ? "range"
+      : "individual"
+  );
   const [useFocus, setUseFocus] = useState(array.focus_point !== null);
 
   const handleFreqModeChange = (mode) => {
     setFreqMode(mode);
-    if (mode === 'individual') {
-      onChange({ frequencies: array.frequencies.length > 0 ? [array.frequencies[0]] : [5000] });
+    if (mode === "individual") {
+      onChange({
+        frequencies:
+          array.frequencies.length > 0 ? [array.frequencies[0]] : [5000],
+      });
     } else {
       const first = array.frequencies[0] || 1000;
       onChange({ frequencies: [first, first + 1000, first + 2000] });
@@ -80,16 +100,22 @@ function ArrayConfig({ array, index, isExpanded, onExpand, onChange, onDelete })
   return (
     <div className="array-config">
       <div className="array-header" onClick={onExpand}>
-        <span>{isExpanded ? '▼' : '►'} Array {index + 1}: {array.name} ({array.type}, {array.num_elements} elements)</span>
+        <span>
+          {isExpanded ? "▼" : "►"} Array {index + 1}: {array.name} ({array.type}
+          , {array.num_elements} elements)
+        </span>
         <button
           className="btn btn-danger"
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          style={{ padding: "0.25rem 0.5rem", fontSize: "0.875rem" }}
         >
           🗑
         </button>
       </div>
-      
+
       {isExpanded && (
         <div className="array-content">
           <NumberInput
@@ -105,8 +131,8 @@ function ArrayConfig({ array, index, isExpanded, onExpand, onChange, onDelete })
             value={array.type}
             onChange={(val) => onChange({ type: val })}
             options={[
-              { value: 'linear', label: 'Linear' },
-              { value: 'curved', label: 'Curved' },
+              { value: "linear", label: "Linear" },
+              { value: "curved", label: "Curved" },
             ]}
           />
 
@@ -117,6 +143,7 @@ function ArrayConfig({ array, index, isExpanded, onExpand, onChange, onDelete })
             min={2}
             max={128}
             step={1}
+            
           />
 
           <NumberInput
@@ -128,7 +155,7 @@ function ArrayConfig({ array, index, isExpanded, onExpand, onChange, onDelete })
             step={0.001}
           />
 
-          {array.type === 'curved' && (
+          {array.type === "curved" && (
             <>
               <NumberInput
                 label="Curvature Radius (m)"
@@ -151,31 +178,43 @@ function ArrayConfig({ array, index, isExpanded, onExpand, onChange, onDelete })
           )}
 
           <div className="section-title">Frequencies</div>
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+          <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
             <button
-              className={`btn ${freqMode === 'individual' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => handleFreqModeChange('individual')}
+              className={`btn ${
+                freqMode === "individual" ? "btn-primary" : "btn-secondary"
+              }`}
+              onClick={() => handleFreqModeChange("individual")}
               style={{ flex: 1 }}
             >
               Individual
             </button>
             <button
-              className={`btn ${freqMode === 'range' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => handleFreqModeChange('range')}
+              className={`btn ${
+                freqMode === "range" ? "btn-primary" : "btn-secondary"
+              }`}
+              onClick={() => handleFreqModeChange("range")}
               style={{ flex: 1 }}
             >
               Range
             </button>
           </div>
 
-          {freqMode === 'individual' ? (
+          {freqMode === "individual" ? (
             <FrequencyList
-              frequencies={Array.isArray(array.frequencies) ? array.frequencies : [array.frequencies]}
+              frequencies={
+                Array.isArray(array.frequencies)
+                  ? array.frequencies
+                  : [array.frequencies]
+              }
               onChange={(freqs) => onChange({ frequencies: freqs })}
             />
           ) : (
             <FrequencyRange
-              frequencies={Array.isArray(array.frequencies) ? array.frequencies : [array.frequencies]}
+              frequencies={
+                Array.isArray(array.frequencies)
+                  ? array.frequencies
+                  : [array.frequencies]
+              }
               onChange={(freqs) => onChange({ frequencies: freqs })}
             />
           )}
@@ -209,30 +248,38 @@ function ArrayConfig({ array, index, isExpanded, onExpand, onChange, onDelete })
               <NumberInput
                 label="Focus X (m)"
                 value={array.focus_point?.x || 0}
-                onChange={(val) => onChange({ focus_point: { ...array.focus_point, x: val } })}
+                onChange={(val) =>
+                  onChange({ focus_point: { ...array.focus_point, x: val } })
+                }
                 step={0.01}
               />
               <NumberInput
                 label="Focus Y (m)"
                 value={array.focus_point?.y || 1}
-                onChange={(val) => onChange({ focus_point: { ...array.focus_point, y: val } })}
+                onChange={(val) =>
+                  onChange({ focus_point: { ...array.focus_point, y: val } })
+                }
                 step={0.01}
               />
             </>
           )}
 
           <div className="section-title">Position</div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
             <NumberInput
               label="X (m)"
               value={array.position?.x || 0}
-              onChange={(val) => onChange({ position: { ...array.position, x: val } })}
+              onChange={(val) =>
+                onChange({ position: { ...array.position, x: val } })
+              }
               step={0.01}
             />
             <NumberInput
               label="Y (m)"
               value={array.position?.y || 0}
-              onChange={(val) => onChange({ position: { ...array.position, y: val } })}
+              onChange={(val) =>
+                onChange({ position: { ...array.position, y: val } })
+              }
               step={0.01}
             />
             <NumberInput
@@ -259,7 +306,12 @@ function FrequencyList({ frequencies, onChange }) {
   };
 
   const addFreq = () => {
-    onChange([...frequencies, frequencies.length > 0 ? frequencies[frequencies.length - 1] + 1000 : 5000]);
+    onChange([
+      ...frequencies,
+      frequencies.length > 0
+        ? frequencies[frequencies.length - 1] + 1000
+        : 5000,
+    ]);
   };
 
   const removeFreq = (index) => {
@@ -272,7 +324,15 @@ function FrequencyList({ frequencies, onChange }) {
   return (
     <div>
       {frequencies.map((freq, idx) => (
-        <div key={idx} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+        <div
+          key={idx}
+          style={{
+            display: "flex",
+            gap: "0.5rem",
+            marginBottom: "0.5rem",
+            alignItems: "center",
+          }}
+        >
           <NumberInput
             label={`f${idx + 1}`}
             value={freq}
@@ -282,12 +342,16 @@ function FrequencyList({ frequencies, onChange }) {
             step={100}
             unit="Hz"
           />
-          <button className="btn btn-danger" onClick={() => removeFreq(idx)} disabled={frequencies.length === 1}>
+          <button
+            className="btn btn-danger"
+            onClick={() => removeFreq(idx)}
+            disabled={frequencies.length === 1}
+          >
             ×
           </button>
         </div>
       ))}
-      <Button variant="secondary" onClick={addFreq} style={{ width: '100%' }}>
+      <Button variant="secondary" onClick={addFreq} style={{ width: "100%" }}>
         + Add Frequency
       </Button>
     </div>
@@ -334,10 +398,15 @@ function FrequencyRange({ frequencies, onChange }) {
         max={1000000}
         step={100}
       />
-      <div style={{ marginTop: '0.5rem', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
+      <div
+        style={{
+          marginTop: "0.5rem",
+          color: "var(--color-text-secondary)",
+          fontSize: "0.875rem",
+        }}
+      >
         Count: {frequencies.length} frequencies
       </div>
     </div>
   );
 }
-

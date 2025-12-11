@@ -1,8 +1,17 @@
-import React from 'react';
-import '../../styles/components.css';
-import './NumberInput.css';
+import React from "react";
+import "../../styles/components.css";
+import "../../styles/NumberInput.css";
 
-export function NumberInput({ label, value, onChange, min, max, step, unit = '', className = '' }) {
+export function NumberInput({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+  unit = "",
+  className = "",
+}) {
   return (
     <div className={`number-input-group ${className}`}>
       {label && <label className="label">{label}</label>}
@@ -21,4 +30,3 @@ export function NumberInput({ label, value, onChange, min, max, step, unit = '',
     </div>
   );
 }
-

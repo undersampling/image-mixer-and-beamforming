@@ -1,10 +1,10 @@
 import React, { useRef, useEffect, useState } from "react";
-import "./InterferenceMap.css";
+import "../../../styles/InterferenceMap.css";
 
 export function InterferenceMap({ data, arrayPositions }) {
   const canvasRef = useRef(null);
   const wrapperRef = useRef(null);
-  
+
   // State for axis labels to display in the UI
   const [axes, setAxes] = useState({ xMin: -1, xMax: 1, yMin: 0, yMax: 2 });
 
@@ -13,12 +13,12 @@ export function InterferenceMap({ data, arrayPositions }) {
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d", { alpha: false }); // Optimize for no transparency
-    
+
     // Get simulation dimensions
     const map = data.map;
-    const rows = map.length;     // Y resolution
-    const cols = map[0].length;  // X resolution
-    
+    const rows = map.length; // Y resolution
+    const cols = map[0].length; // X resolution
+
     // Update Axes Labels
     setAxes({
       xMin: data.x_coords[0],
@@ -48,18 +48,18 @@ export function InterferenceMap({ data, arrayPositions }) {
 
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        // Map is typically [y][x]. Note: Canvas Y is top-down. 
+        // Map is typically [y][x]. Note: Canvas Y is top-down.
         // If simulation Y is bottom-up (standard physics), we read map[rows - 1 - y][x]
         // Assuming data.map matches visual layout here (index 0 is top):
         const value = map[rows - 1 - y][x]; // Flip Y for correct cartesian view
         const normalized = value / safeMax;
-        
+
         // Get color from palette
         const [r, g, b] = getMagmaColor(normalized);
 
         // Calculate 1D array index
         const index = (y * cols + x) * 4;
-        pixels[index] = r;     // R
+        pixels[index] = r; // R
         pixels[index + 1] = g; // G
         pixels[index + 2] = b; // B
         pixels[index + 3] = 255; // Alpha (Opaque)
@@ -73,7 +73,6 @@ export function InterferenceMap({ data, arrayPositions }) {
     // We need a second pass or a second canvas, but drawing on top works if we scale coordinates
     // Since we set canvas.width = cols, we must map physical coords to these pixels
     drawOverlays(ctx, cols, rows, data, arrayPositions);
-
   }, [data, arrayPositions]);
 
   // Helper to draw antennas on top of the heatmap
@@ -90,12 +89,12 @@ export function InterferenceMap({ data, arrayPositions }) {
 
     arrayPositions.forEach((arr, idx) => {
       ctx.fillStyle = idx === 0 ? "#00ffcc" : "#ffff00"; // Cyan vs Yellow
-      
+
       arr.positions.forEach(([physX, physY]) => {
         // Convert physical units to pixel coordinates
         // X: simple ratio
         const px = ((physX - xMin) / xRange) * width;
-        
+
         // Y: Canvas is top-down (0 at top), Physics is bottom-up (0 at bottom)
         // So y_pixel = height - (normalized_y * height)
         const py = height - ((physY - yMin) / yRange) * height;
@@ -117,7 +116,7 @@ export function InterferenceMap({ data, arrayPositions }) {
 
       <div className="canvas-wrapper" ref={wrapperRef}>
         <canvas ref={canvasRef} />
-        
+
         {/* Floating Axis Labels */}
         <div className="axis-label axis-y-end">{axes.yMax.toFixed(2)}m</div>
         <div className="axis-label axis-y-start">{axes.yMin.toFixed(2)}m</div>
@@ -140,7 +139,7 @@ export function InterferenceMap({ data, arrayPositions }) {
 
 /**
  * Returns [r, g, b] for a value 0.0 - 1.0 using a "Magma"-like palette.
- * This is scientifically better than simple RGB interpolation because 
+ * This is scientifically better than simple RGB interpolation because
  * lightness increases monotonically.
  */
 function getMagmaColor(t) {
@@ -152,22 +151,22 @@ function getMagmaColor(t) {
   // 0.3: Purple
   // 0.6: Red/Orange
   // 1.0: Yellow/White
-  
-  // We can use a simple multi-stage linear interpolation for speed 
+
+  // We can use a simple multi-stage linear interpolation for speed
   // without needing a heavy color library.
-  
+
   if (t < 0.25) {
     // Black (#000004) to Purple (#3b0f70)
-    return interp(t, 0, 0.25, [0,0,4], [59,15,112]);
+    return interp(t, 0, 0.25, [0, 0, 4], [59, 15, 112]);
   } else if (t < 0.5) {
     // Purple (#3b0f70) to Red-Purple (#8c2981)
-    return interp(t, 0.25, 0.5, [59,15,112], [140,41,129]);
+    return interp(t, 0.25, 0.5, [59, 15, 112], [140, 41, 129]);
   } else if (t < 0.75) {
     // Red-Purple (#8c2981) to Orange (#fe9f6d)
-    return interp(t, 0.5, 0.75, [140,41,129], [254,159,109]);
+    return interp(t, 0.5, 0.75, [140, 41, 129], [254, 159, 109]);
   } else {
     // Orange (#fe9f6d) to White-Yellow (#fcfdbf)
-    return interp(t, 0.75, 1.0, [254,159,109], [252,253,191]);
+    return interp(t, 0.75, 1.0, [254, 159, 109], [252, 253, 191]);
   }
 }
 
@@ -177,6 +176,6 @@ function interp(val, min, max, rgb1, rgb2) {
   return [
     Math.round(rgb1[0] + (rgb2[0] - rgb1[0]) * ratio),
     Math.round(rgb1[1] + (rgb2[1] - rgb1[1]) * ratio),
-    Math.round(rgb1[2] + (rgb2[2] - rgb1[2]) * ratio)
+    Math.round(rgb1[2] + (rgb2[2] - rgb1[2]) * ratio),
   ];
 }

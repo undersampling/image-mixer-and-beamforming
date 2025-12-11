@@ -2,8 +2,9 @@
 .card {
   background: var(--color-bg-card);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
+  padding-bottom: 0.7px;
+  padding-top: 0.3px;
 }
 
 /* Button */
@@ -105,7 +106,7 @@
   background: var(--color-primary-1);
   cursor: pointer;
   margin-top: -6px; /* Center thumb on track (18/2 - 6/2 = 6) */
-  box-shadow: 0 0 2px rgba(0,0,0,0.2);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
 }
 
 .slider::-moz-range-thumb {
@@ -115,7 +116,7 @@
   background: var(--color-primary-1);
   cursor: pointer;
   border: none;
-  box-shadow: 0 0 2px rgba(0,0,0,0.2);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Label */
