@@ -1,20 +1,45 @@
 .sidebar {
   width: 350px;
-  background: var(--color-bg-card);
-  border: 2px solid var(--color-primary-1);
+  background: linear-gradient(180deg, #000000 0%, #0a0a0a 100%);
+  border: 2px solid rgba(34, 211, 238, 0.3);
   border-radius: 12px;
   overflow-y: auto;
   height: calc(100vh - 32px);
   margin: 16px;
   padding: 12px;
-  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 40px rgba(34, 211, 238, 0.15);
   scrollbar-width: thin;
-  scrollbar-color: var(--color-primary-1) var(--color-bg-main);
+  scrollbar-color: #22d3ee #0a0a0a;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #0a0a0a;
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #22d3ee 0%, #f472b6 100%);
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #22d3ee 30%, #f472b6 100%);
 }
 
 .sidebar-content {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+/* Control Panel */
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }

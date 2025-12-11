@@ -36,7 +36,7 @@ export function ArrayManager() {
   };
 
   return (
-    <Card title=" Phased Arrays">
+    <Card title="Phased Arrays"  defaultExpanded={true}>
       <Button
         variant="primary"
         onClick={handleAddArray}
@@ -143,7 +143,6 @@ function ArrayConfig({
             min={2}
             max={128}
             step={1}
-            
           />
 
           <NumberInput

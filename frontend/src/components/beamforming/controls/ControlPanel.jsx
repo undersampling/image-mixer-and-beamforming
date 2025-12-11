@@ -2,7 +2,6 @@ import React from 'react';
 import { ScenarioLoader } from './ScenarioLoader';
 import { MediumSelector } from './MediumSelector';
 import { ArrayManager } from './ArrayManager';
-import { Card } from '../../common/Card';
 
 export function ControlPanel() {
   return (
@@ -13,4 +12,3 @@ export function ControlPanel() {
     </div>
   );
 }
-

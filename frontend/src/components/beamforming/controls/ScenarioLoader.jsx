@@ -43,7 +43,7 @@ export function ScenarioLoader() {
     : [];
 
   return (
-    <Card title=" Scenario">
+    <Card title="Scenario"  defaultExpanded={true}>
       <Dropdown
         label="Select Scenario"
         value={currentScenario || ""}
@@ -55,11 +55,12 @@ export function ScenarioLoader() {
             : "Select a scenario..."
         }
       />
-      <div style={{ display: "flex", gap: "0.2rem", marginTop: "0.5rem" }}>
+      <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
         <Button
           variant="primary"
           onClick={handleSave}
           disabled={!currentScenario}
+          style={{ flex: 1 }}
         >
           Save
         </Button>
@@ -67,8 +68,9 @@ export function ScenarioLoader() {
           variant="secondary"
           onClick={handleReset}
           disabled={!currentScenario}
+          style={{ flex: 1 }}
         >
-          Reset Default
+          Reset
         </Button>
       </div>
     </Card>

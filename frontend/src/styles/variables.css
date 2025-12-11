@@ -1,24 +1,25 @@
 :root {
-  /* Primary Gradient - Emerald/Teal theme */
-  --color-primary-1: #10b981;
-  --color-primary-2: #14b8a6;
+  /* Primary Colors - Cyan & Pink theme */
+  --color-primary-1: #22d3ee;
+  --color-primary-2: #f472b6;
   --color-primary-3: #06d6a0;
 
   /* Accent Colors */
   --color-accent-pink: #f472b6;
-  --color-accent-emerald: #34d399;
+  --color-accent-cyan: #22d3ee;
   --color-accent-amber: #fbbf24;
   --color-accent-coral: #f87171;
+  --color-accent-emerald: #34d399;
 
-  /* Backgrounds - Dark theme */
-  --color-bg-main: #0f172a;
-  --color-bg-card: #1e293b;
-  --color-bg-hover: #334155;
-  --color-sidebar-start: #0f172a;
-  --color-sidebar-end: #1e293b;
+  /* Backgrounds - Dark Black theme */
+  --color-bg-main: #000000;
+  --color-bg-card: #0a0a0a;
+  --color-bg-hover: #1a1a1a;
+  --color-sidebar-start: #000000;
+  --color-sidebar-end: #0a0a0a;
 
-  /* Heatmap Colors - Scientific visualization */
-  --color-heatmap-1: #0f172a;
+  /* Heatmap Colors */
+  --color-heatmap-1: #0a0a0a;
   --color-heatmap-2: #22d3ee;
   --color-heatmap-3: #10b981;
   --color-heatmap-4: #fbbf24;
@@ -46,4 +47,6 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-glow-cyan: 0 0 20px rgba(34, 211, 238, 0.3);
+  --shadow-glow-pink: 0 0 20px rgba(244, 114, 182, 0.3);
 }

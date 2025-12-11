@@ -1,0 +1,104 @@
+/* Collapsible Card Component */
+.card {
+  background: linear-gradient(135deg, #0a0a0a 0%, #000000 100%);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  margin-bottom: var(--spacing-md);
+}
+
+.card:hover {
+  border-color: rgba(34, 211, 238, 0.4);
+  box-shadow: 0 6px 20px rgba(34, 211, 238, 0.2);
+}
+
+/* Card Header - Collapsible */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.1) 0%, rgba(244, 114, 182, 0.1) 100%);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.card-header:hover {
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.15) 0%, rgba(244, 114, 182, 0.15) 100%);
+}
+
+.card-header.expanded {
+  border-bottom-color: rgba(34, 211, 238, 0.2);
+}
+
+.card-header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.card-icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.5));
+  transition: transform 0.3s ease;
+}
+
+.card-header:hover .card-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.8));
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: linear-gradient(90deg, #22d3ee 0%, #f472b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.card-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(34, 211, 238, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card-toggle-icon {
+  color: #22d3ee;
+  transition: transform 0.3s ease;
+  font-size: 0.875rem;
+}
+
+.card-header.expanded .card-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.card-toggle:hover {
+  background: rgba(34, 211, 238, 0.2);
+}
+
+/* Card Body - Collapsible Content */
+.card-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.4s ease;
+  padding: 0 var(--spacing-md);
+}
+
+.card-body.expanded {
+  max-height: 3000px;
+  padding: var(--spacing-md);
+}
