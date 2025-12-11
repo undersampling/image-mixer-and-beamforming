@@ -1,10 +1,9 @@
 """
-BeamformingSimulator class - Main simulator managing multiple arrays.
+BeamformingSimulator class - Optimized for Real-Time and Web APIs
 """
 import numpy as np
 from typing import Dict, List, Optional, Any
 from .phased_array import PhasedArray
-
 
 class BeamformingSimulator:
     """Main simulator managing multiple phased arrays and calculations."""
@@ -22,7 +21,6 @@ class BeamformingSimulator:
     def __init__(self, config: dict = None):
         """
         Initialize simulator.
-        
         Args:
             config: Optional configuration dictionary
         """
@@ -62,53 +60,59 @@ class BeamformingSimulator:
         return self.MEDIA_SPEEDS.get(medium_name, self.MEDIA_SPEEDS['air'])
     
     def _calculate_interference_map(self) -> Dict:
-        """Calculate interference map (field intensity over space)."""
+        """Vectorized calculation of interference map (field intensity over space)."""
         x_min, x_max = self._visualization['x_range']
         y_min, y_max = self._visualization['y_range']
         resolution = self._visualization['resolution']
         
-        x_coords = np.linspace(x_min, x_max, resolution)
-        y_coords = np.linspace(y_min, y_max, resolution)
+        # Generate Grid using float32 for performance
+        x_coords = np.linspace(x_min, x_max, resolution, dtype=np.float32)
+        y_coords = np.linspace(y_min, y_max, resolution, dtype=np.float32)
         X, Y = np.meshgrid(x_coords, y_coords)
         
-        # Initialize field map
-        field_map = np.zeros_like(X, dtype=complex)
+        # Initialize total field map (complex)
+        total_field_map = np.zeros_like(X, dtype=np.complex64)
         
-        # Sum contributions from all arrays
+        # Sum fields from all arrays
         for array in self._arrays.values():
-            for i in range(resolution):
-                for j in range(resolution):
-                    field_map[i, j] += array.get_field_at_point(X[i, j], Y[i, j])
+            # PASS THE FULL GRID TO THE ARRAY
+            total_field_map += array.get_field_at_points(X, Y)
         
         # Convert to intensity (magnitude squared)
-        intensity_map = np.abs(field_map) ** 2
+        intensity_map = np.abs(total_field_map) ** 2
         
         return {
-            'map': intensity_map.tolist(),
+            'map': intensity_map.tolist(), # Convert to Python list for JSON
             'x_coords': x_coords.tolist(),
             'y_coords': y_coords.tolist(),
         }
     
     def _calculate_beam_profiles(self) -> Dict:
-        """Calculate beam patterns for all arrays."""
-        angles = np.linspace(-np.pi/2, np.pi/2, 181)
+        """Vectorized calculation of beam profiles."""
+        # Create angles array
+        angles = np.linspace(-np.pi/2, np.pi/2, 181, dtype=np.float32)
         angles_deg = np.degrees(angles)
         
         individual_patterns = {}
+        
+        # FIX: Ensure combined pattern is FLOAT, not COMPLEX.
+        # JSON cannot serialize complex numbers.
+        combined_pattern = np.zeros(len(angles), dtype=np.float32)
+        
         for array_id, array in self._arrays.items():
-            pattern = array.get_array_factor(angles)
+            # Use vectorized method
+            pattern = array.get_array_factor_vectorized(angles)
+            
+            # Pattern is magnitude (abs), so it is already real/float.
+            # Convert to list immediately for safety.
             individual_patterns[array_id] = pattern.tolist()
-        
-        # Combined pattern (sum of all arrays)
-        combined_pattern = np.zeros(len(angles))
-        for pattern in individual_patterns.values():
-            combined_pattern += np.array(pattern)
-        combined_pattern = combined_pattern.tolist()
-        
+            
+            combined_pattern += pattern
+            
         return {
             'angles': angles_deg.tolist(),
             'individual': individual_patterns,
-            'combined': combined_pattern,
+            'combined': combined_pattern.tolist(),
         }
     
     def _mark_dirty(self) -> None:
@@ -224,4 +228,3 @@ class BeamformingSimulator:
     def from_dict(cls, data: dict) -> 'BeamformingSimulator':
         """Create simulator from dictionary."""
         return cls(data)
-

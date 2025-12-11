@@ -21,88 +21,84 @@ ChartJS.register(
 );
 
 export function BeamProfile({ data, arrays }) {
-  if (!data || !data.angles || data.angles.length === 0) {
-    return (
-      <div className="beam-profile">
-        <h3>Beam Pattern (Polar)</h3>
-        <div className="no-data">No beam profile data available</div>
-      </div>
-    );
-  }
+  if (!data || !data.angles) return <div className="no-data">No Data</div>;
 
   const datasets = [];
+  
+  // 1. Combined Pattern (The most important one)
+  if (data.combined) {
+    datasets.push({
+      label: "Total Pattern",
+      data: data.combined,
+      borderColor: "#3b82f6", // Blue
+      backgroundColor: "rgba(59, 130, 246, 0.2)",
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: true,
+      order: 1, // Draw on top
+    });
+  }
 
-  // Add individual array patterns
+  // 2. Individual Patterns (Subtle lines)
   if (data.individual && arrays) {
-    const colors = ["#10b981", "#14b8a6", "#f472b6", "#fbbf24"];
+    const colors = ["#10b981", "#f59e0b", "#ec4899"];
     arrays.forEach((array, idx) => {
       if (data.individual[array.id]) {
         datasets.push({
           label: array.name,
           data: data.individual[array.id],
           borderColor: colors[idx % colors.length],
-          backgroundColor: colors[idx % colors.length] + "33",
-          borderWidth: 2,
+          backgroundColor: "transparent", // Don't fill individual
+          borderWidth: 1,
+          borderDash: [4, 4], // Dashed lines for individual
+          pointRadius: 0,
+          order: 2,
         });
       }
     });
   }
 
-  // Add combined pattern
-  if (data.combined && data.combined.length > 0) {
-    datasets.push({
-      label: "Combined",
-      data: data.combined,
-      borderColor: "#ef4444",
-      backgroundColor: "#ef444433",
-      borderWidth: 3,
-      borderDash: [5, 5],
-    });
-  }
-
-  // Convert angles to radians for polar chart
-  const labels = data.angles.map((angle) => {
-    if (angle === -90) return "270°";
-    if (angle === 90) return "90°";
-    if (angle === 0) return "0°";
-    if (angle === 180) return "180°";
-    return `${angle}°`;
-  });
-
-  const chartData = {
-    labels: labels,
-    datasets: datasets,
-  };
+  // Polar labels
+  const labels = data.angles.map((a, i) => (i % 45 === 0 ? `${a}°` : ""));
 
   const options = {
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: false, // Fits container
     scales: {
       r: {
-        beginAtZero: true,
-        ticks: {
-          display: false,
+        angleLines: { color: "#334155" }, // Dark grid lines
+        grid: { color: "#334155" },
+        pointLabels: { 
+          color: "#94a3b8", // Light text
+          font: { size: 10 } 
         },
-        pointLabels: {
-          font: {
-            size: 10,
-          },
-        },
+        ticks: { display: false }, // Hide scale numbers (clutter)
       },
     },
     plugins: {
       legend: {
-        position: "bottom",
+        position: "top",
+        align: "end",
+        labels: { 
+          color: "#cbd5e1",
+          boxWidth: 8,
+          font: { size: 10 }
+        }
       },
+      tooltip: {
+        backgroundColor: "#1e293b",
+        titleColor: "#e2e8f0",
+        bodyColor: "#cbd5e1",
+        borderColor: "#475569",
+        borderWidth: 1,
+      }
     },
+    animation: { duration: 0 } // Disable animation for real-time performance
   };
 
   return (
-    <div className="beam-profile">
-      <h3>Beam Pattern (Polar)</h3>
-      <div className="chart-container">
-        <Radar data={chartData} options={options} />
-      </div>
+    <div className="beam-profile-container" style={{ width: '100%', height: '100%' }}>
+      <Radar data={{ labels, datasets }} options={options} />
     </div>
   );
 }

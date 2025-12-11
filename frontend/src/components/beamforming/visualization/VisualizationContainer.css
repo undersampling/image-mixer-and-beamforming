@@ -1,38 +1,80 @@
 .visualization-container {
-  padding: var(--spacing-sm);
-}
-
-.visualization-container.loading,
-.visualization-container.no-data {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  color: var(--color-text-secondary);
+  /* Fix container to viewport height minus header/padding (approx) */
+  height: calc(100vh - 120px); 
+  min-height: 600px; /* Prevent squashing on very small screens */
+  padding: 0;
+  overflow: hidden; /* Prevent scrolling */
 }
 
 .viz-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-md);
+  grid-template-columns: 3fr 2fr; /* 60% Map, 40% Instruments */
+  grid-template-rows: 100%;
+  gap: 16px;
+  height: 100%;
 }
 
+/* LEFT COLUMN: Map */
+.viz-item.main-stage {
+  grid-column: 1;
+  grid-row: 1;
+  height: 100%; /* Fill entire left side */
+  /* Remove min-height caps, let grid control it */
+  min-height: 0; 
+}
+
+/* RIGHT COLUMN: Container for stacked instruments */
+.instruments-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.viz-item.instrument {
+  flex: 1; /* Each takes 50% height */
+  min-height: 0; /* Allow shrinking */
+  position: relative; /* For canvas absolute positioning */
+}
+
+/* Card Styling Update */
 .viz-item {
-  min-height: 150px;
+  background: #0f172a; /* Darker Slate */
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
 }
 
-.viz-item.full-width {
-  grid-column: 1 / -1;
+.viz-item h3 {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 12px 0;
+  font-weight: 600;
 }
 
+/* Responsive: Stack vertically on tablet/mobile */
 @media (max-width: 1024px) {
+  .visualization-container {
+    height: auto;
+    overflow: auto;
+  }
   .viz-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    height: auto;
   }
-  
-  .viz-item.full-width {
-    grid-column: 1;
+  .viz-item.main-stage {
+    height: 500px;
+  }
+  .instruments-column {
+    height: auto;
+  }
+  .viz-item.instrument {
+    height: 350px;
   }
 }
-

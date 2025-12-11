@@ -9,50 +9,62 @@ import "./VisualizationContainer.css";
 export function VisualizationContainer() {
   const { results, config, loading, initializing } = useSimulator();
 
-  // Show full loading screen ONLY if we are initializing or if we have no results yet
   if (initializing || (!results && loading)) {
     return (
       <div className="visualization-container loading">
         <LoadingSpinner />
-        <p>
-          {initializing 
-            ? "Loading scenario..." 
-            : "Calculating..."}
-        </p>
+        <p style={{marginTop: '1rem', color: '#64748b'}}>Calculating physics...</p>
       </div>
     );
   }
 
-  // Only show "Load a scenario" if we truly have no config (user hasn't loaded anything)
   if (!config) {
     return (
       <div className="visualization-container no-data">
-        <p>Load a scenario to see visualizations</p>
+        <p>Select a scenario to begin</p>
       </div>
     );
   }
 
-  // If we have results, show them (even if loading is true - real-time update)
-  // We can add a subtle indicator if needed, or just let it update smoothly
   const isUpdating = loading && results;
 
   return (
     <div className="visualization-container">
+      {isUpdating && (
+        <div className="status-overlay">
+          <div className="status-dot"></div> SYNCING
+        </div>
+      )}
+
       <div className="viz-grid">
-        <div className="viz-item full-width">
+        {/* LEFT: Main Map */}
+        <div className="viz-item main-stage">
+          <h3>Field Intensity</h3>
           <InterferenceMap
             data={results.interference_map}
             arrayPositions={results.array_positions}
           />
         </div>
-        <div className="viz-item">
-          <BeamProfile data={results.beam_profiles} arrays={config.arrays} />
-        </div>
-        <div className="viz-item">
-          <ArrayDiagram
-            arrayPositions={results.array_positions}
-            config={config}
-          />
+
+        {/* RIGHT: Stacked Instruments */}
+        <div className="instruments-column">
+          
+          <div className="viz-item instrument">
+            <h3>Beam Pattern (Far Field)</h3>
+            <BeamProfile 
+              data={results.beam_profiles} 
+              arrays={config.arrays} 
+            />
+          </div>
+
+          <div className="viz-item instrument">
+            <h3>Array Geometry (Physical)</h3>
+            <ArrayDiagram
+              arrayPositions={results.array_positions}
+              config={config}
+            />
+          </div>
+          
         </div>
       </div>
     </div>

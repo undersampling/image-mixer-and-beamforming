@@ -1,166 +1,156 @@
 import React, { useRef, useEffect } from "react";
-import "./ArrayDiagram.css";
+import "./ArrayDiagram.css"; // Ensure this file exists, even if empty
 
 export function ArrayDiagram({ arrayPositions, config }) {
   const canvasRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    if (!arrayPositions || arrayPositions.length === 0) return;
+    if (!arrayPositions?.length || !containerRef.current) return;
 
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
-    const width = canvas.width;
-    const height = canvas.height;
+    
+    // 1. Responsive Sizing
+    // Make canvas match container pixel-perfectly
+    const { width, height } = containerRef.current.getBoundingClientRect();
+    canvas.width = width;
+    canvas.height = height;
 
-    // Clear canvas
+    // Clear with dark background
+    ctx.fillStyle = "#0f172a"; // Match dashboard bg (optional, or transparent)
     ctx.clearRect(0, 0, width, height);
 
-    // Find bounds
-    let minX = Infinity,
-      maxX = -Infinity;
-    let minY = Infinity,
-      maxY = -Infinity;
-
+    // 2. Calculate Scale & Bounds
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     arrayPositions.forEach(({ positions }) => {
       positions.forEach(([x, y]) => {
-        minX = Math.min(minX, x);
-        maxX = Math.max(maxX, x);
-        minY = Math.min(minY, y);
-        maxY = Math.max(maxY, y);
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
       });
     });
 
-    // Add padding
-    const padding = 0.1;
-    const rangeX = maxX - minX || 1;
-    const rangeY = maxY - minY || 1;
-    minX -= rangeX * padding;
-    maxX += rangeX * padding;
-    minY -= rangeY * padding;
-    maxY += rangeY * padding;
+    // Add 20% padding so elements aren't on edge
+    const rangeX = (maxX - minX) || 0.1; 
+    const rangeY = (maxY - minY) || 0.1;
+    const padX = rangeX * 0.2;
+    const padY = rangeY * 0.2;
+    
+    // Viewport bounds
+    const vMinX = minX - padX;
+    const vMaxX = maxX + padX;
+    const vMinY = minY - padY;
+    const vMaxY = maxY + padY;
 
-    const scaleX = width / (maxX - minX);
-    const scaleY = height / (maxY - minY);
-    const scale = Math.min(scaleX, scaleY);
+    // Scaling factors
+    const scaleX = width / (vMaxX - vMinX);
+    const scaleY = height / (vMaxY - vMinY);
+    const scale = Math.min(scaleX, scaleY); // Uniform scale
 
-    const offsetX = (width - (maxX - minX) * scale) / 2;
-    const offsetY = (height - (maxY - minY) * scale) / 2;
+    // Centering offsets
+    const contentWidth = (vMaxX - vMinX) * scale;
+    const contentHeight = (vMaxY - vMinY) * scale;
+    const offsetX = (width - contentWidth) / 2;
+    const offsetY = (height - contentHeight) / 2;
 
-    const toCanvasX = (x) => (x - minX) * scale + offsetX;
-    const toCanvasY = (y) => (y - minY) * scale + offsetY;
+    // Coordinate Transform: Physics -> Screen
+    // Note: Physics Y is usually up, Screen Y is down. We flip Y.
+    const toScreenX = (x) => (x - vMinX) * scale + offsetX;
+    const toScreenY = (y) => height - ((y - vMinY) * scale + offsetY); // Flip Y
 
-    // Draw axes
-    ctx.strokeStyle = "#cccccc";
+    // 3. Draw Grid (Blueprint style)
+    ctx.strokeStyle = "#1e293b"; // Very subtle grid
     ctx.lineWidth = 1;
-    ctx.setLineDash([5, 5]);
-
-    // X axis
-    if (minY <= 0 && maxY >= 0) {
-      const y0 = toCanvasY(0);
-      ctx.beginPath();
-      ctx.moveTo(0, y0);
-      ctx.lineTo(width, y0);
-      ctx.stroke();
+    ctx.beginPath();
+    // Vertical grid lines
+    for(let i=0; i<=10; i++) {
+        const x = width * (i/10);
+        ctx.moveTo(x, 0); ctx.lineTo(x, height);
     }
-
-    // Y axis
-    if (minX <= 0 && maxX >= 0) {
-      const x0 = toCanvasX(0);
-      ctx.beginPath();
-      ctx.moveTo(x0, 0);
-      ctx.lineTo(x0, height);
-      ctx.stroke();
+    // Horizontal grid lines
+    for(let i=0; i<=10; i++) {
+        const y = height * (i/10);
+        ctx.moveTo(0, y); ctx.lineTo(width, y);
     }
+    ctx.stroke();
 
-    ctx.setLineDash([]);
+    // 4. Draw Array Elements
+    const colors = ["#22d3ee", "#f472b6", "#fbbf24"]; // Cyan, Pink, Amber
+    
+    arrayPositions.forEach((arr, idx) => {
+      const color = colors[idx % colors.length];
+      
+      // Draw Connector Line (Phased Array Backplane)
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.3;
+      ctx.beginPath();
+      // Simple line through all points
+      if (arr.positions.length > 0) {
+          const first = arr.positions[0];
+          const last = arr.positions[arr.positions.length-1];
+          ctx.moveTo(toScreenX(first[0]), toScreenY(first[1]));
+          ctx.lineTo(toScreenX(last[0]), toScreenY(last[1]));
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
 
-    // Draw arrays
-    const colors = ["#10b981", "#14b8a6", "#f472b6", "#fbbf24"];
-    const arrayNames = config?.arrays?.map((a) => a.name) || [];
+      // Draw Elements (LED style)
+      ctx.fillStyle = "#0f172a"; // Inner black
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
 
-    arrayPositions.forEach((arrayData, arrayIdx) => {
-      const positions = arrayData.positions;
-      const color = colors[arrayIdx % colors.length];
+      arr.positions.forEach(([x, y]) => {
+        const sx = toScreenX(x);
+        const sy = toScreenY(y);
 
-      // Draw steering direction if available
-      const array = config?.arrays?.find((a) => a.id === arrayData.id);
-      if (array && array.steering_angle !== undefined && !array.focus_point) {
-        const centerX =
-          positions.reduce((sum, [x]) => sum + x, 0) / positions.length;
-        const centerY =
-          positions.reduce((sum, [, y]) => sum + y, 0) / positions.length;
-        const angle = (array.steering_angle * Math.PI) / 180;
-        const length = 30;
-
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(toCanvasX(centerX), toCanvasY(centerY));
-        ctx.lineTo(
-          toCanvasX(centerX + (length * Math.sin(angle)) / scale),
-          toCanvasY(centerY + (length * Math.cos(angle)) / scale)
-        );
+        ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+        ctx.fill();
         ctx.stroke();
 
-        // Arrowhead
+        // Glow effect center
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.arc(
-          toCanvasX(centerX + (length * Math.sin(angle)) / scale),
-          toCanvasY(centerY + (length * Math.cos(angle)) / scale),
-          3,
-          0,
-          2 * Math.PI
-        );
+        ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
         ctx.fill();
-      }
-
-      // Draw elements
-      ctx.fillStyle = color;
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 1;
-
-      positions.forEach(([x, y]) => {
-        const canvasX = toCanvasX(x);
-        const canvasY = toCanvasY(y);
-
-        ctx.beginPath();
-        ctx.arc(canvasX, canvasY, 5, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.stroke();
+        ctx.fillStyle = "#0f172a"; // Reset
       });
+
+      // Draw Steering Vector (Arrow)
+      // We look up the steering angle from config if available
+      const arrayConfig = config?.arrays?.find(a => a.id === arr.id);
+      if (arrayConfig && !arrayConfig.focus_point) {
+          const angleRad = (arrayConfig.steering_angle || 0) * (Math.PI / 180);
+          
+          // Calculate center of array
+          const cx = toScreenX(arr.positions[Math.floor(arr.positions.length/2)][0]);
+          const cy = toScreenY(arr.positions[Math.floor(arr.positions.length/2)][1]);
+          
+          // Arrow Length (fixed pixels)
+          const len = 40;
+          // Physics angle 0 is usually "Up" or "Right" depending on convention. 
+          // Assuming 0 is straight up (Y+):
+          const ex = cx + Math.sin(angleRad) * len; 
+          const ey = cy - Math.cos(angleRad) * len; // Subtract because screen Y is flipped
+
+          ctx.strokeStyle = color;
+          ctx.setLineDash([2, 2]);
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(ex, ey);
+          ctx.stroke();
+          ctx.setLineDash([]);
+      }
     });
 
-    // Draw legend
-    ctx.fillStyle = "#000000";
-    ctx.font = "12px sans-serif";
-    let legendY = 20;
-    arrayPositions.forEach((arrayData, arrayIdx) => {
-      const color = colors[arrayIdx % colors.length];
-      const name = arrayNames[arrayIdx] || `Array ${arrayIdx + 1}`;
-
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(20, legendY, 6, 0, 2 * Math.PI);
-      ctx.fill();
-
-      ctx.fillStyle = "#000000"; // Keep text black for now, or update if background is dark?
-      // Wait, ArrayDiagram background is white in CSS?
-      // .array-diagram .canvas-container { background: white; }
-      // So black text is fine.
-      ctx.fillText(name, 35, legendY + 4);
-      legendY += 20;
-    });
   }, [arrayPositions, config]);
 
   return (
-    <div className="array-diagram">
-      <h3>Array Elements</h3>
-      <div className="canvas-container">
-        <canvas ref={canvasRef} width={600} height={150}></canvas>
-      </div>
+    <div className="array-diagram-wrapper" ref={containerRef} style={{ width: '100%', height: '100%' }}>
+      <canvas ref={canvasRef} style={{ display: 'block' }} />
     </div>
   );
 }

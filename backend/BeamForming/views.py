@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
+import traceback # IMPORTED FOR DEBUGGING
 from .engine.simulator import BeamformingSimulator
 from .engine.scenario_manager import ScenarioManager
 
@@ -24,16 +25,34 @@ def calculate(request):
         
         return JsonResponse(results)
     
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        # --- DEBUG LOGGING ---
+        print("\n\n!!! CALCULATION ERROR !!!")
+        print(f"Error Message: {str(e)}")
+        print("Traceback:")
+        traceback.print_exc()
+        print("!!! END ERROR !!!\n\n")
+        # ---------------------
+        
+        # Return 500 for internal errors so the frontend knows it crashed
+        # Return 400 only if it's a known validation error (e.g. ValueError)
+        status_code = 400 if isinstance(e, ValueError) else 500
+        return JsonResponse({'error': str(e)}, status=status_code)
 
 
 @require_http_methods(["GET"])
 def scenario_list(request):
     """Get list of available scenarios."""
-    manager = ScenarioManager()
-    scenarios = manager.get_scenario_list()
-    return JsonResponse(scenarios, safe=False)
+    try:
+        manager = ScenarioManager()
+        scenarios = manager.get_scenario_list()
+        return JsonResponse(scenarios, safe=False)
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @require_http_methods(["GET", "PUT"])
@@ -47,6 +66,9 @@ def scenario_detail(request, scenario_id):
             return JsonResponse(scenario)
         except FileNotFoundError:
             return JsonResponse({'error': 'Scenario not found'}, status=404)
+        except Exception as e:
+            traceback.print_exc()
+            return JsonResponse({'error': str(e)}, status=500)
     
     elif request.method == 'PUT':
         try:
@@ -57,6 +79,7 @@ def scenario_detail(request, scenario_id):
             else:
                 return JsonResponse({'error': 'Invalid scenario data'}, status=400)
         except Exception as e:
+            traceback.print_exc()
             return JsonResponse({'error': str(e)}, status=400)
 
 
@@ -71,6 +94,7 @@ def reset_scenario(request, scenario_id):
     except FileNotFoundError:
         return JsonResponse({'error': 'Scenario not found'}, status=404)
     except Exception as e:
+        traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=400)
 
 
@@ -79,11 +103,15 @@ def reset_scenario(request, scenario_id):
 def reset_all_scenarios(request):
     """Reset all scenarios to defaults."""
     manager = ScenarioManager()
-    success = manager.reset_all_scenarios()
-    if success:
-        return JsonResponse({'success': True})
-    else:
-        return JsonResponse({'error': 'Failed to reset scenarios'}, status=500)
+    try:
+        success = manager.reset_all_scenarios()
+        if success:
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'error': 'Failed to reset scenarios'}, status=500)
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @require_http_methods(["GET"])
@@ -98,4 +126,3 @@ def media_list(request):
         {'name': 'bone', 'speed': 3500},
     ]
     return JsonResponse(media, safe=False)
-
