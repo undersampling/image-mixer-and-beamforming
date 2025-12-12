@@ -46,6 +46,38 @@ export const apiService = {
     return response.data;
   },
 };
+export const mixerService = {
+  uploadImage: async (sessionId, imageData) => {
+    const response = await api.post('/mixer/upload/', {
+      session_id: sessionId,
+      image_data: imageData
+    });
+    return response.data;
+  },
 
+  getComponent: async (sessionId, imageId, component) => {
+    const response = await api.get('/mixer/image/component/', {
+      params: { session_id: sessionId, image_id: imageId, component }
+    });
+    return response.data;
+  },
+
+  startMixing: async (sessionId, mixConfigs, regionType, regionSize) => {
+    const response = await api.post('/mixer/mix/start/', {
+      session_id: sessionId,
+      mix_configs: mixConfigs,
+      region_type: regionType,
+      region_size: regionSize
+    });
+    return response.data;
+  },
+
+  getMixProgress: async (operationId) => {
+    const response = await api.get('/mixer/mix/progress/', {
+      params: { operation_id: operationId }
+    });
+    return response.data;
+  }
+};
 export default api;
 
