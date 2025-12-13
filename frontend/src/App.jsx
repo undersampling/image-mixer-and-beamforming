@@ -14,11 +14,7 @@ function App() {
         <Routes>
           <Route
             path="/mixer"
-            element={
-              <MainLayout sidebar={null}>
-                <PartAPage />
-              </MainLayout>
-            }
+            element={<PartAPage />}
           />
           <Route
             path="/beamforming"

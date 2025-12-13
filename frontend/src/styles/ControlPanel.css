@@ -1,0 +1,170 @@
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+}
+
+.control-section {
+  width: 100%;
+  flex-shrink: 0;
+  padding: 0.75rem;
+}
+
+.control-section h3 {
+  margin: 0 0 0.4rem 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ccc;
+}
+
+.mode-select {
+  width: 100%;
+  padding: 0.4rem;
+  background-color: #0f1f35;
+  color: #fff;
+  border: 1px solid #2a4a6a;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.mode-select:hover {
+  border-color: #3a5a7a;
+}
+
+.mode-select:focus {
+  outline: none;
+  border-color: #4a7a9a;
+}
+
+.weights-section {
+  width: 100%;
+}
+
+.weights-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.weight-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.weight-control label {
+  font-size: 0.85rem;
+  color: #ccc;
+}
+
+.image-mode-select {
+  margin-bottom: 0.25rem;
+}
+
+.mode-select-small {
+  width: 100%;
+  padding: 0.25rem;
+  background-color: #0f1f35;
+  color: #fff;
+  border: 1px solid #2a4a6a;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.progress-bar-container {
+  margin-top: 0.5rem;
+  width: 100%;
+  height: 20px;
+  background-color: #0f1f35;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4a7a9a, #5a8aaa);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  color: #fff;
+  font-weight: 500;
+}
+
+.mix-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.weight-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #0f1f35;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.weight-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #4a7a9a;
+  cursor: pointer;
+}
+
+.weight-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #4a7a9a;
+  cursor: pointer;
+  border: none;
+}
+
+.weight-value {
+  font-size: 0.85rem;
+  color: #fff;
+  text-align: center;
+  font-weight: 500;
+}
+
+.mix-button {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background-color: #4a7a9a;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.mix-button:hover {
+  background-color: #5a8aaa;
+}
+
+.mix-button:active {
+  background-color: #3a6a8a;
+}
+
+@media (max-width: 768px) {
+  .weights-container {
+    grid-template-columns: 1fr;
+  }
+}
+
