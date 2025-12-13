@@ -66,6 +66,12 @@ export function SimulatorProvider({ children }) {
     try {
       setLoading(true);
       const data = await apiService.getScenario(scenarioId);
+
+      // Ensure mode field exists
+      if (!data.mode) {
+        data.mode = "transmitter";
+      }
+
       setCurrentScenario(scenarioId);
       setConfig(data);
       setError(null);
@@ -101,6 +107,12 @@ export function SimulatorProvider({ children }) {
     try {
       setLoading(true);
       const data = await apiService.resetScenario(scenarioId);
+
+      // Ensure mode field exists
+      if (!data.mode) {
+        data.mode = "transmitter";
+      }
+
       setConfig(data);
       setError(null);
     } catch (err) {
@@ -325,6 +337,13 @@ export function SimulatorProvider({ children }) {
               // Fetch fresh from backend
               data = await apiService.getScenario(scenarioIdToLoad);
             }
+
+            // --- UPDATE: ENSURE MODE EXISTS IN BOTH CASES ---
+            // Even if loaded from LocalStorage, it might be an old save file
+            if (!data.mode) {
+              data.mode = "transmitter";
+            }
+            // ------------------------------------------------
 
             setCurrentScenario(scenarioIdToLoad);
             setConfig(data);

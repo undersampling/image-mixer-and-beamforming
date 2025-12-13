@@ -29,14 +29,40 @@ export function VisualizationContainer() {
   const isUpdating = loading && results;
 
   return (
-    <div className="visualization-container">
-      {isUpdating && (
-        <div className="status-overlay">
-          <div className="status-dot"></div> SYNCING
-        </div>
-      )}
+    <div 
+      className="visualization-container" 
+      style={{ 
+        position: "relative",
+        // --- LAYOUT FIX ---
+        display: "flex",          // Enable Flexbox
+        flexDirection: "column",  // Stack items vertically
+        height: "100%",           // Fill the parent height
+        overflow: "hidden"        // Prevent outer scrollbars
+      }}
+    >
+      
+      {/* HEADER: Flex-shrink 0 (Don't shrink) */}
+      <div className="viz-header" style={{ 
+        flex: "0 0 auto", // Keep natural height
+        padding: "0 0 1rem 0", 
+        borderBottom: "1px solid var(--color-border)",
+        marginBottom: "1rem"
+      }}>
+        <h1 style={{ 
+          fontSize: "1.5rem", 
+          margin: 0, 
+          color: "var(--color-text-primary)" 
+        }}>
+          Beamforming Simulator
+        </h1>
+      </div>
 
-      <div className="viz-grid">
+      {/* GRID: Flex-grow 1 (Fill remaining space) */}
+      <div className="viz-grid" style={{
+        flex: "1",        // Take up all remaining space
+        minHeight: "0",   // Critical for scroll/overflow to work in Flexbox
+      
+      }}>
         {/* LEFT: Main Map */}
         <div className="viz-item main-stage">
           <h3>Field Intensity</h3>
@@ -63,6 +89,23 @@ export function VisualizationContainer() {
           </div>
         </div>
       </div>
+
+      {/* SYNCING STATUS */}
+      {isUpdating && (
+        <div 
+          className="status-overlay" 
+          style={{ 
+            top: "auto",
+            bottom: "1rem",
+            right: "1rem",
+            position: "absolute",
+            zIndex: 10 // Ensure it floats above graphs
+          }}
+        >
+          <div className="status-dot"></div> SYNCING
+        </div>
+      )}
+
     </div>
   );
 }

@@ -765,13 +765,12 @@ const ControlPanel = () => {
 };
 
 // Main MixerPage Component
+// Main MixerPage Component
 export function PartAPage() {
   return (
     <ImageMixerProvider>
       <div className="App">
-        <header className="App-header">
-          <h1>Fourier Transform Image Mixer</h1>
-        </header>
+        {/* Header Removed as requested */}
         <main className="App-main">
           <div className="main-content">
             <div className="controls-left">
@@ -801,4 +800,3 @@ export function PartAPage() {
     </ImageMixerProvider>
   );
 }
-

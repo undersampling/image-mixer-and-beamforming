@@ -1,6 +1,3 @@
-"""
-BeamformingSimulator class - Optimized for Real-Time and Web APIs
-"""
 import numpy as np
 from typing import Dict, List, Optional, Any
 from .phased_array import PhasedArray
@@ -26,6 +23,7 @@ class BeamformingSimulator:
         """
         self._arrays: Dict[str, PhasedArray] = {}
         self._medium = {'name': 'air', 'speed': 343}
+        self._mode = 'transmitter'  # Default mode
         self._visualization = {
             'x_range': [-10, 10],
             'y_range': [0, 10],
@@ -39,6 +37,10 @@ class BeamformingSimulator:
     
     def _load_from_config(self, config: dict) -> None:
         """Load configuration into simulator."""
+        # Load Mode (Transmitter vs Receiver)
+        if 'mode' in config:
+            self._mode = config['mode']
+
         if 'medium' in config:
             self.set_medium(config['medium'].get('name', 'air'),
                           config['medium'].get('speed'))
@@ -74,39 +76,31 @@ class BeamformingSimulator:
         total_field_map = np.zeros_like(X, dtype=np.complex64)
         
         # Sum fields from all arrays
+        # Note: By Reciprocity, the Sensitivity Map (Receiver) is mathematically 
+        # identical to the Field Map (Transmitter) for Phased Arrays.
         for array in self._arrays.values():
-            # PASS THE FULL GRID TO THE ARRAY
             total_field_map += array.get_field_at_points(X, Y)
         
         # Convert to intensity (magnitude squared)
         intensity_map = np.abs(total_field_map) ** 2
         
         return {
-            'map': intensity_map.tolist(), # Convert to Python list for JSON
+            'map': intensity_map.tolist(), 
             'x_coords': x_coords.tolist(),
             'y_coords': y_coords.tolist(),
         }
     
     def _calculate_beam_profiles(self) -> Dict:
         """Vectorized calculation of beam profiles."""
-        # Create angles array
         angles = np.linspace(-np.pi/2, np.pi/2, 181, dtype=np.float32)
         angles_deg = np.degrees(angles)
         
         individual_patterns = {}
-        
-        # FIX: Ensure combined pattern is FLOAT, not COMPLEX.
-        # JSON cannot serialize complex numbers.
         combined_pattern = np.zeros(len(angles), dtype=np.float32)
         
         for array_id, array in self._arrays.items():
-            # Use vectorized method
             pattern = array.get_array_factor_vectorized(angles)
-            
-            # Pattern is magnitude (abs), so it is already real/float.
-            # Convert to list immediately for safety.
             individual_patterns[array_id] = pattern.tolist()
-            
             combined_pattern += pattern
             
         return {
@@ -141,7 +135,6 @@ class BeamformingSimulator:
         if array_id not in self._arrays:
             return False
         
-        # Remove old array and create new one with updated config
         old_array = self._arrays[array_id]
         old_config = old_array.to_dict()
         old_config.update(updates)
@@ -160,7 +153,6 @@ class BeamformingSimulator:
         
         self._medium = {'name': medium_name, 'speed': speed}
         
-        # Update all arrays with new medium speed
         for array_id in self._arrays:
             array = self._arrays[array_id]
             config = array.to_dict()
@@ -188,12 +180,12 @@ class BeamformingSimulator:
                 'interference_map': {'map': [], 'x_coords': [], 'y_coords': []},
                 'beam_profiles': {'angles': [], 'individual': {}, 'combined': []},
                 'array_positions': [],
+                'mode': self._mode # Optionally return mode in results too
             }
         
         interference_map = self._calculate_interference_map()
         beam_profiles = self._calculate_beam_profiles()
         
-        # Get array positions
         array_positions = []
         for array_id, array in self._arrays.items():
             positions = array.get_element_positions()
@@ -203,6 +195,7 @@ class BeamformingSimulator:
             })
         
         results = {
+            'mode': self._mode, # Return mode so frontend can confirm state
             'interference_map': interference_map,
             'beam_profiles': beam_profiles,
             'array_positions': array_positions,
@@ -213,12 +206,12 @@ class BeamformingSimulator:
         return results
     
     def get_results(self) -> Dict:
-        """Get cached results or calculate."""
         return self.calculate()
     
     def to_dict(self) -> dict:
         """Full serialization."""
         return {
+            'mode': self._mode, # Added mode to serialization
             'medium': self._medium,
             'visualization': self._visualization,
             'arrays': [array.to_dict() for array in self._arrays.values()],
@@ -226,5 +219,4 @@ class BeamformingSimulator:
     
     @classmethod
     def from_dict(cls, data: dict) -> 'BeamformingSimulator':
-        """Create simulator from dictionary."""
         return cls(data)

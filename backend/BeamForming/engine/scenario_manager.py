@@ -1,19 +1,14 @@
-"""
-ScenarioManager class - Handle scenario files (defaults + current).
-"""
 import json
 import shutil
 from pathlib import Path
 from typing import Dict, List, Optional
 from .simulator import BeamformingSimulator
 
-
 class ScenarioManager:
     """Manages scenario files with defaults and current copies."""
     
     def __init__(self):
         """Initialize scenario manager with directory paths."""
-        # Get the directory containing this file
         engine_dir = Path(__file__).parent
         simulator_dir = engine_dir.parent
         project_dir = simulator_dir.parent
@@ -21,28 +16,29 @@ class ScenarioManager:
         self._defaults_dir = simulator_dir / 'scenarios' / 'defaults'
         self._current_dir = simulator_dir / 'scenarios' / 'current'
         
-        # Ensure directories exist
         self._defaults_dir.mkdir(parents=True, exist_ok=True)
         self._current_dir.mkdir(parents=True, exist_ok=True)
         
-        # Initialize current from defaults if empty
         self._ensure_current_exists()
     
     def _ensure_current_exists(self) -> None:
         """Copy defaults to current if current has no JSON files."""
-        # Check if there are any JSON files in current directory
         current_json_files = list(self._current_dir.glob('*.json'))
         
         if not current_json_files:
-            # Copy all defaults to current
             for default_file in self._defaults_dir.glob('*.json'):
                 shutil.copy2(default_file, self._current_dir / default_file.name)
     
     def _validate_scenario(self, data: dict) -> bool:
         """Validate scenario data structure."""
-        required_fields = ['id', 'name', 'medium', 'arrays']
+        # Added 'mode' to required fields
+        required_fields = ['id', 'name', 'medium', 'arrays', 'mode']
         for field in required_fields:
             if field not in data:
+                # Fallback: if 'mode' is missing (old save files), we can validly accept it
+                # and the simulator class will default it to 'transmitter'.
+                if field == 'mode':
+                    continue
                 return False
         return True
     
@@ -58,6 +54,7 @@ class ScenarioManager:
                         'name': data.get('name', 'Unnamed Scenario'),
                         'description': data.get('description', ''),
                         'category': data.get('category', 'general'),
+                        'mode': data.get('mode', 'transmitter'), # Include mode in list summary
                     })
             except (json.JSONDecodeError, IOError):
                 continue
@@ -71,7 +68,11 @@ class ScenarioManager:
             raise FileNotFoundError(f"Scenario '{scenario_id}' not found")
         
         with open(scenario_file, 'r') as f:
-            return json.load(f)
+            data = json.load(f)
+            # Ensure mode exists in returned data for older files
+            if 'mode' not in data:
+                data['mode'] = 'transmitter'
+            return data
     
     def save_scenario(self, scenario_id: str, config: dict) -> bool:
         """Save scenario to current directory."""
@@ -98,16 +99,17 @@ class ScenarioManager:
         
         # Return the reset config
         with open(current_file, 'r') as f:
-            return json.load(f)
+            data = json.load(f)
+            if 'mode' not in data:
+                data['mode'] = 'transmitter'
+            return data
     
     def reset_all_scenarios(self) -> bool:
         """Reset all scenarios to defaults."""
         try:
-            # Remove all current files
             for current_file in self._current_dir.glob('*.json'):
                 current_file.unlink()
             
-            # Copy all defaults to current
             for default_file in self._defaults_dir.glob('*.json'):
                 shutil.copy2(default_file, self._current_dir / default_file.name)
             
