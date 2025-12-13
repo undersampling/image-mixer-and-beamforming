@@ -10,8 +10,8 @@
   },
   
   "visualization": {
-    "x_range": [-0.08, 0.08],
-    "y_range": [0, 0.12],
+    "x_range": [-10, 10],
+    "y_range": [0, 10],
     "resolution": 150
   },
   

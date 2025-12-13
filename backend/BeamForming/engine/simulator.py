@@ -27,8 +27,8 @@ class BeamformingSimulator:
         self._arrays: Dict[str, PhasedArray] = {}
         self._medium = {'name': 'air', 'speed': 343}
         self._visualization = {
-            'x_range': [-1, 1],
-            'y_range': [0, 2],
+            'x_range': [-10, 10],
+            'y_range': [0, 10],
             'resolution': 100
         }
         self._is_dirty = True

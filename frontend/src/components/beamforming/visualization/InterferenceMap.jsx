@@ -6,7 +6,7 @@ export function InterferenceMap({ data, arrayPositions, beamProfiles }) {
   const wrapperRef = useRef(null);
 
   // State for axis labels to display in the UI
-  const [axes, setAxes] = useState({ xMin: -1, xMax: 1, yMin: 0, yMax: 2 });
+  const [axes, setAxes] = useState({ xMin: -10, xMax: 10, yMin: 0, yMax: 10 });
 
   useEffect(() => {
     if (!data || !data.map || !data.map.length) return;
@@ -148,21 +148,52 @@ export function InterferenceMap({ data, arrayPositions, beamProfiles }) {
     });
   };
 
+  // Generate tick marks for axes
+  const generateTicks = (min, max, count = 5) => {
+    const step = (max - min) / count;
+    const ticks = [];
+    for (let i = 0; i <= count; i++) {
+      ticks.push(min + step * i);
+    }
+    return ticks;
+  };
+
+  const xTicks = generateTicks(axes.xMin, axes.xMax, 10);
+  const yTicks = generateTicks(axes.yMin, axes.yMax, 5);
+
   return (
     <div className="interference-map">
       <div className="map-header">
         <h3>Field Intensity Map</h3>
-        {/* Optional: Add resolution info or toggle here */}
       </div>
 
-      <div className="canvas-wrapper" ref={wrapperRef}>
-        <canvas ref={canvasRef} />
+      <div className="map-with-axes">
+        {/* Y-Axis Label */}
+        <div className="y-axis-label">Range (m)</div>
+        
+        {/* Y-Axis Ticks */}
+        <div className="y-axis-ticks">
+          {yTicks.slice().reverse().map((tick, i) => (
+            <div key={i} className="tick-label">{tick.toFixed(0)}</div>
+          ))}
+        </div>
 
-        {/* Floating Axis Labels */}
-        <div className="axis-label axis-y-end">{axes.yMax.toFixed(2)}m</div>
-        <div className="axis-label axis-y-start">{axes.yMin.toFixed(2)}m</div>
-        <div className="axis-label axis-x-start">{axes.xMin.toFixed(2)}m</div>
-        <div className="axis-label axis-x-end">{axes.xMax.toFixed(2)}m</div>
+        {/* Main Canvas Area */}
+        <div className="canvas-area">
+          <div className="canvas-wrapper" ref={wrapperRef}>
+            <canvas ref={canvasRef} />
+          </div>
+
+          {/* X-Axis Ticks */}
+          <div className="x-axis-ticks">
+            {xTicks.map((tick, i) => (
+              <div key={i} className="tick-label">{tick.toFixed(0)}</div>
+            ))}
+          </div>
+
+          {/* X-Axis Label */}
+          <div className="x-axis-label">Range (m)</div>
+        </div>
       </div>
 
       <div className="map-footer">
