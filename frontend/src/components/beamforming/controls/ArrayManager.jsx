@@ -101,8 +101,7 @@ function ArrayConfig({
     <div className="array-config">
       <div className="array-header" onClick={onExpand}>
         <span>
-          {isExpanded ? "▼" : "►"} Array {index + 1}: {array.name} ({array.type}
-          , {array.num_elements} elements)
+          {isExpanded ? "▼" : "►"} Array {index + 1}: ({array.type},{array.num_elements} elements)
         </span>
         <button
           className="btn btn-danger"
@@ -118,12 +117,8 @@ function ArrayConfig({
 
       {isExpanded && (
         <div className="array-content">
-          <NumberInput
-            label="Name"
-            value={array.name}
-            onChange={(val) => onChange({ name: val.toString() })}
-            className="full-width"
-          />
+          
+          
 
           <div className="section-title">Geometry</div>
           <Dropdown

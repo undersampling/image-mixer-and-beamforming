@@ -9,20 +9,13 @@ export function ScenarioLoader() {
     scenarios,
     currentScenario,
     loadScenario,
-    saveScenario,
     resetScenario,
+    lastSaveTime,
   } = useSimulator();
 
   const handleLoad = (scenarioId) => {
     if (scenarioId) {
       loadScenario(scenarioId);
-    }
-  };
-
-  const handleSave = () => {
-    if (currentScenario) {
-      saveScenario(currentScenario);
-      alert("Scenario saved!");
     }
   };
 
@@ -43,7 +36,7 @@ export function ScenarioLoader() {
     : [];
 
   return (
-    <Card title="Scenario"  defaultExpanded={true}>
+    <Card title="Scenario" defaultExpanded={true}>
       <Dropdown
         label="Select Scenario"
         value={currentScenario || ""}
@@ -55,15 +48,7 @@ export function ScenarioLoader() {
             : "Select a scenario..."
         }
       />
-      <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-        <Button
-          variant="primary"
-          onClick={handleSave}
-          disabled={!currentScenario}
-          style={{ flex: 1 }}
-        >
-          Save
-        </Button>
+      <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
         <Button
           variant="secondary"
           onClick={handleReset}

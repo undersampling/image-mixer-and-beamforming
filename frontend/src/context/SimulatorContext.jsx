@@ -11,19 +11,33 @@ import { useDebounce } from "../hooks/useDebounce";
 
 const SimulatorContext = createContext(null);
 
+// LocalStorage keys
+const STORAGE_KEYS = {
+  CONFIG: "simulator_config",
+  CURRENT_SCENARIO: "simulator_current_scenario",
+  LAST_SAVE: "simulator_last_save_time",
+};
+
 export function SimulatorProvider({ children }) {
   const [scenarios, setScenarios] = useState([]);
   const [currentScenario, setCurrentScenario] = useState(null);
   const [config, setConfig] = useState(null);
   const [results, setResults] = useState(null);
+  const [lastSaveTime, setLastSaveTime] = useState(
+    localStorage.getItem(STORAGE_KEYS.LAST_SAVE) || null
+  );
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [error, setError] = useState(null);
   const hasInitialized = useRef(false);
 
-  // Debounce config changes for real-time updates
+  // Debounce config changes for real-time updates and auto-saving
   const debouncedConfig = useDebounce(config, 400);
+
+  // Keep track of last saved config string to detect unsaved changes
+  const lastSavedRef = useRef(null);
+  const isDirtyRef = useRef(false);
 
   // Load scenarios list
   const loadScenarios = useCallback(async () => {
@@ -62,13 +76,20 @@ export function SimulatorProvider({ children }) {
     }
   }, []);
 
-  // Save current scenario
+  // Save current scenario (auto-save to backend)
   const saveScenario = useCallback(
     async (scenarioId) => {
-      if (!config) return;
+      if (!config || !scenarioId) return;
       try {
         await apiService.saveScenario(scenarioId, config);
+        // Update last save time and mark saved
+        const now = new Date().toISOString();
+        localStorage.setItem(STORAGE_KEYS.LAST_SAVE, now);
+        setLastSaveTime(now);
+        lastSavedRef.current = JSON.stringify(config);
+        isDirtyRef.current = false;
       } catch (err) {
+        console.error("Auto-save error:", err);
         setError(err.message);
       }
     },
@@ -146,6 +167,31 @@ export function SimulatorProvider({ children }) {
     }
   }, [debouncedConfig, initializing]);
 
+  // Save config to localStorage whenever it changes
+  useEffect(() => {
+    if (config) {
+      localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(config));
+    }
+  }, [config]);
+
+  // Track dirty state by comparing current config to last saved copy
+  useEffect(() => {
+    if (!config) return;
+    try {
+      const str = JSON.stringify(config);
+      isDirtyRef.current = lastSavedRef.current !== str;
+    } catch (e) {
+      isDirtyRef.current = true;
+    }
+  }, [config]);
+
+  // Save current scenario to localStorage
+  useEffect(() => {
+    if (currentScenario) {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_SCENARIO, currentScenario);
+    }
+  }, [currentScenario]);
+
   // Calculate when config changes (debounced)
   useEffect(() => {
     if (
@@ -156,6 +202,61 @@ export function SimulatorProvider({ children }) {
       calculate();
     }
   }, [debouncedConfig, calculate]);
+
+  // Auto-save to backend when config changes (debounced)
+  useEffect(() => {
+    if (debouncedConfig && currentScenario) {
+      // Delay the auto-save slightly to avoid too many concurrent requests
+      const timer = setTimeout(() => {
+        saveScenario(currentScenario);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [debouncedConfig, currentScenario, saveScenario]);
+
+  // Ensure a final save attempt when the user refreshes/closes the page.
+  // Uses `fetch` with `keepalive: true` and falls back to `navigator.sendBeacon`.
+  useEffect(() => {
+    const handler = () => {
+      try {
+        if (!currentScenario || !config) return;
+        const currentJson = JSON.stringify(config);
+        if (lastSavedRef.current === currentJson) return; // nothing to do
+
+        const url = `/api/scenarios/${currentScenario}/`;
+
+        // Try fetch with keepalive (preferred for PUT)
+        try {
+          // Fire-and-forget; browsers will attempt to complete keepalive requests
+          fetch(url, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: currentJson,
+            keepalive: true,
+          });
+        } catch (e) {
+          // Fallback to sendBeacon (POST may be accepted by server)
+          try {
+            const blob = new Blob([currentJson], { type: "application/json" });
+            if (navigator.sendBeacon) navigator.sendBeacon(url, blob);
+          } catch (e2) {
+            // swallow
+          }
+        }
+
+        // Always persist locally as a final fallback
+        localStorage.setItem(STORAGE_KEYS.CONFIG, currentJson);
+        const now = new Date().toISOString();
+        localStorage.setItem(STORAGE_KEYS.LAST_SAVE, now);
+        setLastSaveTime(now);
+      } catch (e) {
+        // ignore unload errors
+      }
+    };
+
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [currentScenario, config]);
 
   // Mark initialization as complete when we have results for the first time
   useEffect(() => {
@@ -183,20 +284,61 @@ export function SimulatorProvider({ children }) {
     const initialize = async () => {
       hasInitialized.current = true;
       setInitializing(true);
-      
+
       try {
         await loadMedia();
         const scenariosData = await loadScenarios();
 
-        // Auto-load first scenario if available
-        if (scenariosData && scenariosData.length > 0) {
-          const firstScenarioId = scenariosData[0].id;
+        // Check if we have saved state in localStorage
+        const savedScenarioId = localStorage.getItem(
+          STORAGE_KEYS.CURRENT_SCENARIO
+        );
+        const savedConfig = localStorage.getItem(STORAGE_KEYS.CONFIG);
+
+        let scenarioIdToLoad = savedScenarioId;
+        let shouldUseLocalStorage = false;
+
+        // If we have saved state and the scenario still exists in loaded scenarios, use it
+        if (
+          savedScenarioId &&
+          savedConfig &&
+          scenariosData.some((s) => s.id === savedScenarioId)
+        ) {
+          scenarioIdToLoad = savedScenarioId;
+          shouldUseLocalStorage = true;
+        } else {
+          // Otherwise use first scenario
+          scenarioIdToLoad =
+            scenariosData && scenariosData.length > 0
+              ? scenariosData[0].id
+              : null;
+        }
+
+        // Load and set the scenario
+        if (scenarioIdToLoad && scenariosData.length > 0) {
           try {
-            const data = await apiService.getScenario(firstScenarioId);
-            setCurrentScenario(firstScenarioId);
+            let data;
+            if (shouldUseLocalStorage) {
+              // Use saved config from localStorage
+              data = JSON.parse(savedConfig);
+            } else {
+              // Fetch fresh from backend
+              data = await apiService.getScenario(scenarioIdToLoad);
+            }
+
+            setCurrentScenario(scenarioIdToLoad);
             setConfig(data);
             setError(null);
-            
+            // If we loaded from backend, treat that as already-saved state
+            if (!shouldUseLocalStorage) {
+              try {
+                lastSavedRef.current = JSON.stringify(data);
+                const last = localStorage.getItem(STORAGE_KEYS.LAST_SAVE);
+                if (last) setLastSaveTime(last);
+              } catch (e) {
+                lastSavedRef.current = null;
+              }
+            }
             // Trigger immediate calculation for initial load (don't wait for debounce)
             try {
               setLoading(true);
@@ -244,6 +386,7 @@ export function SimulatorProvider({ children }) {
     addArray,
     removeArray,
     calculate,
+    lastSaveTime,
   };
 
   return (
@@ -260,4 +403,3 @@ export function useSimulator() {
   }
   return context;
 }
-

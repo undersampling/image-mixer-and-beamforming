@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import "../../../styles/InterferenceMap.css";
 
-export function InterferenceMap({ data, arrayPositions }) {
+export function InterferenceMap({ data, arrayPositions, beamProfiles }) {
   const canvasRef = useRef(null);
   const wrapperRef = useRef(null);
 
@@ -19,12 +19,51 @@ export function InterferenceMap({ data, arrayPositions }) {
     const rows = map.length; // Y resolution
     const cols = map[0].length; // X resolution
 
-    // Update Axes Labels
+    const xCoords = data.x_coords;
+    const yCoords = data.y_coords;
+    const xMin = xCoords[0];
+    const xMax = xCoords[xCoords.length - 1];
+    const yMin = yCoords[0];
+    const yMax = yCoords[yCoords.length - 1];
+
+    // Compute intensity centroid along physical X (weighted mean)
+    let sumW = 0;
+    let sumWX = 0;
+    for (let yy = 0; yy < rows; yy++) {
+      for (let xx = 0; xx < cols; xx++) {
+        const val = Number(map[yy][xx]) || 0;
+        const physX = xCoords[xx];
+        sumW += val;
+        sumWX += physX * val;
+      }
+    }
+    const centroidX = sumW ? sumWX / sumW : (xMin + xMax) / 2;
+    const midX = (xMin + xMax) / 2;
+    const centroidSide = centroidX < midX ? -1 : 1;
+
+    // Determine beam peak side from beamProfiles (if available)
+    let beamSide = 0;
+    if (beamProfiles && beamProfiles.combined && beamProfiles.angles) {
+      const combined = beamProfiles.combined;
+      const angles = beamProfiles.angles;
+      let maxIdx = 0;
+      for (let i = 1; i < combined.length; i++) {
+        if (combined[i] > combined[maxIdx]) maxIdx = i;
+      }
+      const peakAngle = angles[maxIdx] || 0;
+      beamSide = peakAngle < 0 ? -1 : 1;
+    }
+
+    // If centroid and beam peak are on opposite sides, we flip horizontally
+    const flipX =
+      beamSide !== 0 && centroidSide !== 0 && beamSide !== centroidSide;
+
+    // Update Axes Labels (flip labels if we flipped the X axis)
     setAxes({
-      xMin: data.x_coords[0],
-      xMax: data.x_coords[data.x_coords.length - 1],
-      yMin: data.y_coords[0],
-      yMax: data.y_coords[data.y_coords.length - 1],
+      xMin: flipX ? xMax : xMin,
+      xMax: flipX ? xMin : xMax,
+      yMin,
+      yMax,
     });
 
     // 1. Set Canvas Resolution to match Data Resolution exactly
@@ -48,10 +87,13 @@ export function InterferenceMap({ data, arrayPositions }) {
 
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
+        // Optionally mirror X source index
+        const srcX = flipX ? cols - 1 - x : x;
+
         // Map is typically [y][x]. Note: Canvas Y is top-down.
         // If simulation Y is bottom-up (standard physics), we read map[rows - 1 - y][x]
-        // Assuming data.map matches visual layout here (index 0 is top):
-        const value = map[rows - 1 - y][x]; // Flip Y for correct cartesian view
+        // We keep that Y-flip for display, but mirror X source if needed
+        const value = map[rows - 1 - y][srcX]; // Flip Y for correct cartesian view
         const normalized = value / safeMax;
 
         // Get color from palette
@@ -70,10 +112,9 @@ export function InterferenceMap({ data, arrayPositions }) {
     ctx.putImageData(imgData, 0, 0);
 
     // 5. Draw Overlay Elements (Antennas)
-    // We need a second pass or a second canvas, but drawing on top works if we scale coordinates
     // Since we set canvas.width = cols, we must map physical coords to these pixels
-    drawOverlays(ctx, cols, rows, data, arrayPositions);
-  }, [data, arrayPositions]);
+    drawOverlays(ctx, cols, rows, data, arrayPositions, flipX);
+  }, [data, arrayPositions, beamProfiles]);
 
   // Helper to draw antennas on top of the heatmap
   const drawOverlays = (ctx, width, height, data, arrayPositions) => {
