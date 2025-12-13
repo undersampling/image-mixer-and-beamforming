@@ -1,13 +1,16 @@
 import React from "react";
+import { useNavigate } from "react-router-dom"; // 1. Import Router Hook
 import { useSimulator } from "../../../context/SimulatorContext";
 import { InterferenceMap } from "./InterferenceMap";
 import { BeamProfile } from "./BeamProfile";
 import { ArrayDiagram } from "./ArrayDiagram";
 import { LoadingSpinner } from "../../common/LoadingSpinner";
+import { Button } from "../../common/Button"; // 2. Import Button (adjust path if necessary)
 import "../../../styles/VisualizationContainer.css";
 
 export function VisualizationContainer() {
   const { results, config, loading, initializing } = useSimulator();
+  const navigate = useNavigate(); // 3. Initialize hook
 
   if (initializing || (!results && loading)) {
     return (
@@ -33,20 +36,22 @@ export function VisualizationContainer() {
       className="visualization-container" 
       style={{ 
         position: "relative",
-        // --- LAYOUT FIX ---
-        display: "flex",          // Enable Flexbox
-        flexDirection: "column",  // Stack items vertically
-        height: "100%",           // Fill the parent height
-        overflow: "hidden"        // Prevent outer scrollbars
+        display: "flex",          
+        flexDirection: "column",  
+        height: "100%",           
+        overflow: "hidden"        
       }}
     >
       
-      {/* HEADER: Flex-shrink 0 (Don't shrink) */}
+      {/* HEADER: Updated to Flexbox for button placement */}
       <div className="viz-header" style={{ 
-        flex: "0 0 auto", // Keep natural height
+        flex: "0 0 auto",
         padding: "0 0 1rem 0", 
         borderBottom: "1px solid var(--color-border)",
-        marginBottom: "1rem"
+        marginBottom: "1rem",
+        display: "flex",                // Enable Flexbox
+        justifyContent: "space-between", // Push items to edges
+        alignItems: "center"            // Vertically center
       }}>
         <h1 style={{ 
           fontSize: "1.5rem", 
@@ -55,13 +60,20 @@ export function VisualizationContainer() {
         }}>
           Beamforming Simulator
         </h1>
+
+        {/* 4. Add Navigation Button */}
+        <Button 
+          variant="secondary" // Optional: Use 'primary' or 'secondary' depending on preference
+          onClick={() => navigate('http://localhost:5173/mixer')} // Adjust route path as needed
+        >
+          Go to Image Mixer &rarr;
+        </Button>
       </div>
 
-      {/* GRID: Flex-grow 1 (Fill remaining space) */}
+      {/* GRID */}
       <div className="viz-grid" style={{
-        flex: "1",        // Take up all remaining space
-        minHeight: "0",   // Critical for scroll/overflow to work in Flexbox
-      
+        flex: "1",        
+        minHeight: "0",   
       }}>
         {/* LEFT: Main Map */}
         <div className="viz-item main-stage">
@@ -99,7 +111,7 @@ export function VisualizationContainer() {
             bottom: "1rem",
             right: "1rem",
             position: "absolute",
-            zIndex: 10 // Ensure it floats above graphs
+            zIndex: 10 
           }}
         >
           <div className="status-dot"></div> SYNCING
