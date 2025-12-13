@@ -122,7 +122,8 @@ class PhasedArray:
         distances = np.sqrt(dist_sq)
         
         # Calculate Phase term
-        total_phase = k * distances + phases
+        # NEGATIVE sign for proper beamforming: waves should converge constructively
+        total_phase = -k * distances + phases
         
         # Calculate Amplitude with attenuation
         # Using 1/(1+r) to avoid division by zero at element location

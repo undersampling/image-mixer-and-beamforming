@@ -26,42 +26,10 @@ export function InterferenceMap({ data, arrayPositions, beamProfiles }) {
     const yMin = yCoords[0];
     const yMax = yCoords[yCoords.length - 1];
 
-    // Compute intensity centroid along physical X (weighted mean)
-    let sumW = 0;
-    let sumWX = 0;
-    for (let yy = 0; yy < rows; yy++) {
-      for (let xx = 0; xx < cols; xx++) {
-        const val = Number(map[yy][xx]) || 0;
-        const physX = xCoords[xx];
-        sumW += val;
-        sumWX += physX * val;
-      }
-    }
-    const centroidX = sumW ? sumWX / sumW : (xMin + xMax) / 2;
-    const midX = (xMin + xMax) / 2;
-    const centroidSide = centroidX < midX ? -1 : 1;
-
-    // Determine beam peak side from beamProfiles (if available)
-    let beamSide = 0;
-    if (beamProfiles && beamProfiles.combined && beamProfiles.angles) {
-      const combined = beamProfiles.combined;
-      const angles = beamProfiles.angles;
-      let maxIdx = 0;
-      for (let i = 1; i < combined.length; i++) {
-        if (combined[i] > combined[maxIdx]) maxIdx = i;
-      }
-      const peakAngle = angles[maxIdx] || 0;
-      beamSide = peakAngle < 0 ? -1 : 1;
-    }
-
-    // If centroid and beam peak are on opposite sides, we flip horizontally
-    const flipX =
-      beamSide !== 0 && centroidSide !== 0 && beamSide !== centroidSide;
-
-    // Update Axes Labels (flip labels if we flipped the X axis)
+    // Update Axes Labels
     setAxes({
-      xMin: flipX ? xMax : xMin,
-      xMax: flipX ? xMin : xMax,
+      xMin,
+      xMax,
       yMin,
       yMax,
     });
@@ -71,15 +39,37 @@ export function InterferenceMap({ data, arrayPositions, beamProfiles }) {
     canvas.width = cols;
     canvas.height = rows;
 
-    // 2. Normalize Data
-    // Find absolute max intensity to normalize (usually 0 to Max)
-    let maxVal = 0;
-    for (let row of map) {
-      for (let val of row) {
-        if (val > maxVal) maxVal = val;
+    // 2. Apply Range Compensation (TVG - Time Varied Gain)
+    // This cancels out the 1/r² geometric spreading so the beam is uniform
+    // Also normalize using dB (logarithmic) scale
+    
+    // First, apply R² compensation to create a compensated map
+    const compensatedMap = [];
+    let maxCompensatedVal = 0;
+    
+    for (let yIdx = 0; yIdx < rows; yIdx++) {
+      const compensatedRow = [];
+      const physY = yCoords[yIdx]; // Physical Y coordinate
+      
+      for (let xIdx = 0; xIdx < cols; xIdx++) {
+        const physX = xCoords[xIdx]; // Physical X coordinate
+        const rawValue = map[yIdx][xIdx];
+        
+        // Calculate distance from array center (assuming array is at y=0)
+        // R² compensation: multiply intensity by R² to cancel 1/R² spreading
+        const R = Math.max(0.1, Math.sqrt(physX * physX + physY * physY)); // Min 0.1 to avoid division issues
+        const compensatedValue = rawValue * R * R; // R² compensation
+        
+        compensatedRow.push(compensatedValue);
+        if (compensatedValue > maxCompensatedVal) maxCompensatedVal = compensatedValue;
       }
+      compensatedMap.push(compensatedRow);
     }
-    const safeMax = maxVal || 1; // Prevent divide by zero
+    
+    const safeMax = maxCompensatedVal || 1; // Prevent divide by zero
+    
+    // dB dynamic range (e.g., 40 dB means we show 4 orders of magnitude)
+    const dynamicRangeDB = 40;
 
     // 3. Create ImageData (The fast way)
     const imgData = ctx.createImageData(cols, rows);
@@ -87,14 +77,20 @@ export function InterferenceMap({ data, arrayPositions, beamProfiles }) {
 
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        // Optionally mirror X source index
-        const srcX = flipX ? cols - 1 - x : x;
-
         // Map is typically [y][x]. Note: Canvas Y is top-down.
         // If simulation Y is bottom-up (standard physics), we read map[rows - 1 - y][x]
-        // We keep that Y-flip for display, but mirror X source if needed
-        const value = map[rows - 1 - y][srcX]; // Flip Y for correct cartesian view
-        const normalized = value / safeMax;
+        const value = compensatedMap[rows - 1 - y][x]; // Flip Y for correct cartesian view
+        
+        // Convert to dB scale: 10 * log10(value/max)
+        // Then normalize to 0-1 based on dynamic range
+        let normalized;
+        if (value <= 0) {
+          normalized = 0;
+        } else {
+          const dB = 10 * Math.log10(value / safeMax); // 0 to -infinity
+          // Map from [-dynamicRangeDB, 0] to [0, 1]
+          normalized = Math.max(0, Math.min(1, (dB + dynamicRangeDB) / dynamicRangeDB));
+        }
 
         // Get color from palette
         const [r, g, b] = getMagmaColor(normalized);
@@ -113,7 +109,7 @@ export function InterferenceMap({ data, arrayPositions, beamProfiles }) {
 
     // 5. Draw Overlay Elements (Antennas)
     // Since we set canvas.width = cols, we must map physical coords to these pixels
-    drawOverlays(ctx, cols, rows, data, arrayPositions, flipX);
+    drawOverlays(ctx, cols, rows, data, arrayPositions);
   }, [data, arrayPositions, beamProfiles]);
 
   // Helper to draw antennas on top of the heatmap

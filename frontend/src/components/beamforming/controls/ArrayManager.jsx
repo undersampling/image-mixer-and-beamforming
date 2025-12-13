@@ -36,11 +36,11 @@ export function ArrayManager() {
   };
 
   return (
-    <Card title="Phased Arrays"  defaultExpanded={true}>
+    <Card title="Phased Arrays" defaultExpanded={true}>
       <Button
         variant="primary"
         onClick={handleAddArray}
-        style={{ marginBottom: "1rem", width: "100%" }}
+        style={{ marginTop: "1rem", marginBottom: "3px", width: "100%" }}
       >
         + Add Array
       </Button>
@@ -101,7 +101,8 @@ function ArrayConfig({
     <div className="array-config">
       <div className="array-header" onClick={onExpand}>
         <span>
-          {isExpanded ? "▼" : "►"} Array {index + 1}: ({array.type},{array.num_elements} elements)
+          {isExpanded ? "▼" : "►"} Array {index + 1}: ({array.type},
+          {array.num_elements}elements)
         </span>
         <button
           className="btn btn-danger"
@@ -117,9 +118,6 @@ function ArrayConfig({
 
       {isExpanded && (
         <div className="array-content">
-          
-          
-
           <div className="section-title">Geometry</div>
           <Dropdown
             label="Type"
