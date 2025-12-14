@@ -48,6 +48,7 @@ class PhasedArray:
         if self._array_type == 'linear':
             # Vectorized linear placement
             indices = np.arange(self._num_elements, dtype=np.float32)
+            # appling offset to center the array around 0 
             x_local = (indices - (self._num_elements - 1) / 2) * self._element_spacing
             positions[:, 0] = x_local
         
@@ -55,8 +56,11 @@ class PhasedArray:
             # Vectorized curved placement
             arc_rad = radians(self._arc_angle)
             indices = np.arange(self._num_elements, dtype=np.float32)
+            # numbers between 0 and 1
             angle_local = (indices / (self._num_elements - 1) - 0.5) * arc_rad
+            # numbers will be between -1 and 1
             positions[:, 0] = self._curvature_radius * np.sin(angle_local)
+            # to make the arc is curved up so we use (1-cos(angle_local))
             positions[:, 1] = self._curvature_radius * (1 - np.cos(angle_local))
         
         # Apply rotation
@@ -64,6 +68,7 @@ class PhasedArray:
             rot_rad = radians(self._rotation)
             cos_r, sin_r = cos(rot_rad), sin(rot_rad)
             rotation_matrix = np.array([[cos_r, -sin_r], [sin_r, cos_r]], dtype=np.float32)
+            # matrix multiplication
             positions = positions @ rotation_matrix.T
         
         # Apply translation
@@ -82,6 +87,7 @@ class PhasedArray:
     
     def _calculate_phases_for_steering(self) -> None:
         k = self._wave_numbers[0]
+        # convert steering angle to radians
         steering_rad = radians(self._steering_angle)
         # Vectorized phase calc
         x_positions = self._element_positions[:, 0]

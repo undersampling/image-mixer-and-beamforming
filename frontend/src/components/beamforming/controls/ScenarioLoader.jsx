@@ -10,8 +10,6 @@ export function ScenarioLoader() {
     currentScenario,
     loadScenario,
     resetScenario,
-    config,       // <--- Added
-    updateConfig, // <--- Added
   } = useSimulator();
 
   const handleLoad = (scenarioId) => {
@@ -28,10 +26,6 @@ export function ScenarioLoader() {
     }
   };
 
-  const handleModeChange = (mode) => {
-    updateConfig({ mode });
-  };
-
   // Safely map scenarios to options
   const scenarioOptions = Array.isArray(scenarios)
     ? scenarios.map((s) => ({
@@ -42,28 +36,6 @@ export function ScenarioLoader() {
 
   return (
     <Card title="Scenario" defaultExpanded={true}>
-      
-      {/* --- NEW TOGGLE POSITION (No Emojis) --- */}
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
-        <Button
-          variant={config?.mode === "transmitter" ? "primary" : "secondary"}
-          onClick={() => handleModeChange("transmitter")}
-          style={{ flex: 1 }}
-          disabled={!config} 
-        >
-          Transmitter
-        </Button>
-        <Button
-          variant={config?.mode === "receiver" ? "primary" : "secondary"}
-          onClick={() => handleModeChange("receiver")}
-          style={{ flex: 1 }}
-          disabled={!config}
-        >
-          Receiver
-        </Button>
-      </div>
-      {/* --------------------------------------- */}
-
       <Dropdown
         label="Select Scenario"
         value={currentScenario || ""}

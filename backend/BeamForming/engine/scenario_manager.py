@@ -31,14 +31,9 @@ class ScenarioManager:
     
     def _validate_scenario(self, data: dict) -> bool:
         """Validate scenario data structure."""
-        # Added 'mode' to required fields
-        required_fields = ['id', 'name', 'medium', 'arrays', 'mode']
+        required_fields = ['id', 'name', 'medium', 'arrays']
         for field in required_fields:
             if field not in data:
-                # Fallback: if 'mode' is missing (old save files), we can validly accept it
-                # and the simulator class will default it to 'transmitter'.
-                if field == 'mode':
-                    continue
                 return False
         return True
     
@@ -54,7 +49,6 @@ class ScenarioManager:
                         'name': data.get('name', 'Unnamed Scenario'),
                         'description': data.get('description', ''),
                         'category': data.get('category', 'general'),
-                        'mode': data.get('mode', 'transmitter'), # Include mode in list summary
                     })
             except (json.JSONDecodeError, IOError):
                 continue
@@ -68,11 +62,7 @@ class ScenarioManager:
             raise FileNotFoundError(f"Scenario '{scenario_id}' not found")
         
         with open(scenario_file, 'r') as f:
-            data = json.load(f)
-            # Ensure mode exists in returned data for older files
-            if 'mode' not in data:
-                data['mode'] = 'transmitter'
-            return data
+            return json.load(f)
     
     def save_scenario(self, scenario_id: str, config: dict) -> bool:
         """Save scenario to current directory."""
@@ -99,10 +89,7 @@ class ScenarioManager:
         
         # Return the reset config
         with open(current_file, 'r') as f:
-            data = json.load(f)
-            if 'mode' not in data:
-                data['mode'] = 'transmitter'
-            return data
+            return json.load(f)
     
     def reset_all_scenarios(self) -> bool:
         """Reset all scenarios to defaults."""

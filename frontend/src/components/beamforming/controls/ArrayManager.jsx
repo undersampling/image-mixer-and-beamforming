@@ -133,7 +133,7 @@ function ArrayConfig({
             label="Elements"
             value={array.num_elements}
             onChange={(val) => onChange({ num_elements: Math.round(val) })}
-            min={2}
+            min={1}
             max={128}
             step={1}
           />
@@ -142,7 +142,7 @@ function ArrayConfig({
             label="Element Spacing (m)"
             value={array.element_spacing}
             onChange={(val) => onChange({ element_spacing: val })}
-            min={0.001}
+            min={0.00001}
             max={1}
             step={0.001}
           />
@@ -256,7 +256,8 @@ function ArrayConfig({
             </>
           )}
 
-          <div className="section-title">Position</div>
+          <div className="section-title">Array Position</div>
+          
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <NumberInput
               label="X (m)"

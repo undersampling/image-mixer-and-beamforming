@@ -23,7 +23,6 @@ class BeamformingSimulator:
         """
         self._arrays: Dict[str, PhasedArray] = {}
         self._medium = {'name': 'air', 'speed': 343}
-        self._mode = 'transmitter'  # Default mode
         self._visualization = {
             'x_range': [-10, 10],
             'y_range': [0, 10],
@@ -37,10 +36,6 @@ class BeamformingSimulator:
     
     def _load_from_config(self, config: dict) -> None:
         """Load configuration into simulator."""
-        # Load Mode (Transmitter vs Receiver)
-        if 'mode' in config:
-            self._mode = config['mode']
-
         if 'medium' in config:
             self.set_medium(config['medium'].get('name', 'air'),
                           config['medium'].get('speed'))
@@ -75,9 +70,7 @@ class BeamformingSimulator:
         # Initialize total field map (complex)
         total_field_map = np.zeros_like(X, dtype=np.complex64)
         
-        # Sum fields from all arrays
-        # Note: By Reciprocity, the Sensitivity Map (Receiver) is mathematically 
-        # identical to the Field Map (Transmitter) for Phased Arrays.
+        # Sum fields from all arrays (transmitter mode)
         for array in self._arrays.values():
             total_field_map += array.get_field_at_points(X, Y)
         
@@ -180,7 +173,6 @@ class BeamformingSimulator:
                 'interference_map': {'map': [], 'x_coords': [], 'y_coords': []},
                 'beam_profiles': {'angles': [], 'individual': {}, 'combined': []},
                 'array_positions': [],
-                'mode': self._mode # Optionally return mode in results too
             }
         
         interference_map = self._calculate_interference_map()
@@ -195,7 +187,6 @@ class BeamformingSimulator:
             })
         
         results = {
-            'mode': self._mode, # Return mode so frontend can confirm state
             'interference_map': interference_map,
             'beam_profiles': beam_profiles,
             'array_positions': array_positions,
@@ -211,7 +202,6 @@ class BeamformingSimulator:
     def to_dict(self) -> dict:
         """Full serialization."""
         return {
-            'mode': self._mode, # Added mode to serialization
             'medium': self._medium,
             'visualization': self._visualization,
             'arrays': [array.to_dict() for array in self._arrays.values()],
