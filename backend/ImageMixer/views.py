@@ -43,9 +43,10 @@ def upload_image(request):
             controller.add_image(image_data, image_index)
             controller.update_image_processing()
             
-            # Return the processed image
+            # Return the processed image (use display image if brightness/contrast adjusted)
             image = controller.list_of_images[image_index]
-            image_base64 = numpy_to_base64(image.modified_image[2])
+            display_image = image.get_display_image()
+            image_base64 = numpy_to_base64(display_image)
             
             return Response({
                 'success': True,
@@ -171,10 +172,12 @@ def adjust_brightness_contrast(request):
         
         try:
             controller.adjust_brightness_contrast(image_index, brightness, contrast)
-            controller.update_image_processing()
+            # Don't call update_image_processing() - brightness/contrast is display-only
             
             image = controller.list_of_images[image_index]
-            image_base64 = numpy_to_base64(image.modified_image[2])
+            # Use display image (with brightness/contrast) for the response
+            display_image = image.get_display_image()
+            image_base64 = numpy_to_base64(display_image)
             
             return Response({
                 'success': True,
@@ -214,7 +217,9 @@ def reset_brightness_contrast(request):
         controller.reset_brightness_contrast(image_index)
         
         image = controller.list_of_images[image_index]
-        image_base64 = numpy_to_base64(image.modified_image[2])
+        # Use display image (reset brightness/contrast) for the response
+        display_image = image.get_display_image()
+        image_base64 = numpy_to_base64(display_image)
         
         return Response({
             'success': True,
@@ -296,7 +301,9 @@ def get_image(request, image_index):
                 'error': 'Image not loaded'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        image_base64 = numpy_to_base64(image.modified_image[2])
+        # Use display image (with brightness/contrast if adjusted)
+        display_image = image.get_display_image()
+        image_base64 = numpy_to_base64(display_image)
         
         return Response({
             'success': True,

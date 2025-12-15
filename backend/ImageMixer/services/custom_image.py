@@ -40,6 +40,11 @@ class CustomImage:
             # Handle image sizing and contrast
             self.original_sized_image = deepcopy(self.__original_image)
             
+            # Display adjustments (brightness/contrast) - separate from mixing data
+            self.__display_brightness = 0.0
+            self.__display_contrast = 0.0
+            self.__display_image = None  # Will be computed when needed
+            
             self.image__mag_weight = 25
             self.image__phase_weight = 25
             self.image_mag_taken = False
@@ -82,8 +87,13 @@ class CustomImage:
         self.__modified_image_fourier_components = new_modified_image_fourier_components
     
     def transform(self):
-        """Compute Fourier transform of the modified image."""
-        self.modified_image_fourier_components = np.fft.fftshift(np.fft.fft2(self.modified_image[2]))
+        """
+        Compute Fourier transform of the image used for mixing.
+        Uses original_sized_image (without display adjustments).
+        """
+        # Use the image for mixing, not the display-adjusted version
+        mixing_image = self.get_image_for_mixing()
+        self.modified_image_fourier_components = np.fft.fftshift(np.fft.fft2(mixing_image))
         self.modified_image_fourier_components_mag = np.abs(self.__modified_image_fourier_components)
         self.modified_image_fourier_components_phase = np.angle(self.__modified_image_fourier_components)
         self.modified_image_fourier_components_real = np.real(self.__modified_image_fourier_components)
@@ -110,24 +120,70 @@ class CustomImage:
             self.original_sized_image[2] = cv2.resize(self.original_image[2], (width, height))
             # After resizing, transform will be computed by update_image_processing
     
+    @property
+    def display_brightness(self):
+        """Get current display brightness adjustment."""
+        return self.__display_brightness
+    
+    @property
+    def display_contrast(self):
+        """Get current display contrast adjustment."""
+        return self.__display_contrast
+    
+    def get_display_image(self):
+        """
+        Get the image with brightness/contrast adjustments applied for display only.
+        This does NOT affect the mixing data.
+        """
+        # If no adjustments, return original sized image directly
+        if self.__display_brightness == 0.0 and self.__display_contrast == 0.0:
+            if hasattr(self, 'original_sized_image') and self.original_sized_image is not None:
+                return self.original_sized_image[2]
+            return self.__original_image[2]
+        
+        # If adjustments exist, compute display image
+        if self.__display_image is None:
+            if hasattr(self, 'original_sized_image') and self.original_sized_image is not None:
+                base_image = self.original_sized_image[2]
+            else:
+                base_image = self.__original_image[2]
+            
+            self.__display_image = cv2.convertScaleAbs(
+                base_image,
+                alpha=1.0 + self.__display_contrast,
+                beta=self.__display_brightness
+            )
+        return self.__display_image
+    
     def adjust_brightness_contrast(self, brightness, contrast):
-        """Adjust brightness and contrast of the image."""
-        self.modified_image[2] = cv2.convertScaleAbs(
-            self.original_sized_image[2], 
-            alpha=1 + contrast, 
-            beta=brightness
-        )
-        self.transform()
+        """
+        Adjust brightness and contrast for DISPLAY ONLY.
+        This does NOT affect the mixing data - mixing uses original_sized_image.
+        """
+        self.__display_brightness = brightness
+        self.__display_contrast = contrast
+        # Invalidate display image cache so it gets recomputed
+        self.__display_image = None
     
     def reset_brightness_contrast(self):
-        """Reset image to original (no brightness/contrast adjustments)."""
-        # Reset to original sized image (which is already resized to match other images)
+        """Reset brightness and contrast display adjustments to zero."""
+        self.__display_brightness = 0.0
+        self.__display_contrast = 0.0
+        # Clear cache so next call returns original image
+        self.__display_image = None
+        # Also ensure modified_image matches original_sized_image
         if hasattr(self, 'original_sized_image') and self.original_sized_image is not None:
             self.modified_image[0] = self.original_sized_image[0].copy()
             self.modified_image[1] = self.original_sized_image[1].copy()
             self.modified_image[2] = self.original_sized_image[2].copy()
-        else:
-            # Fallback to original if original_sized_image doesn't exist
-            self.modified_image = deepcopy(self.original_image)
-        self.transform()
+    
+    def get_image_for_mixing(self):
+        """
+        Get the image data to use for mixing (without display adjustments).
+        This ensures brightness/contrast adjustments don't affect the output.
+        """
+        # Always use original_sized_image for mixing, never the display-adjusted version
+        if hasattr(self, 'original_sized_image') and self.original_sized_image is not None:
+            return self.original_sized_image[2]
+        return self.__original_image[2]
 

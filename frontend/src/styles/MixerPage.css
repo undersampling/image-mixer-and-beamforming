@@ -488,27 +488,27 @@ html, body {
 /* ROI Overlay */
 .roi-overlay {
   position: absolute;
-  border: 2px solid #FF3838;
-  background: rgba(255, 56, 56, 0.15);
+  border: 2px solid #22d3ee;
+  background: rgba(34, 211, 238, 0.15);
   cursor: move;
-  box-shadow: 0 0 0 1px rgba(220, 0, 0, 0.5), 0 0 16px rgba(255, 56, 56, 0.4);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.5), 0 0 16px rgba(34, 211, 238, 0.4);
 }
 
 .resize-handle {
   position: absolute;
   width: 12px;
   height: 12px;
-  background: linear-gradient(135deg, #FF3838, #DC0000);
+  background: linear-gradient(135deg, #22d3ee, #06b6d4);
   border: 2px solid #ffffff;
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(220, 0, 0, 0.6);
+  box-shadow: 0 2px 8px rgba(34, 211, 238, 0.6);
   transition: all 0.2s ease;
 }
 
 .resize-handle:hover {
   transform: scale(1.3);
-  background: linear-gradient(135deg, #DC0000, #FF3838);
-  box-shadow: 0 3px 12px rgba(255, 56, 56, 0.8);
+  background: linear-gradient(135deg, #06b6d4, #22d3ee);
+  box-shadow: 0 3px 12px rgba(34, 211, 238, 0.8);
 }
 
 .resize-handle[data-handle="nw"] {
