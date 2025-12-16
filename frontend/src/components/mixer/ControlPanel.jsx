@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useImageMixer } from './ImageMixerContext';
+import { ImageControl } from './ImageControl';
 import '../../styles/ControlPanel.css';
 
 /**
@@ -157,48 +158,18 @@ export const ControlPanel = () => {
         <h3>Image Weights & Modes</h3>
         <div className="weights-container">
           {[0, 1, 2, 3].map((index) => (
-            <div key={index} className="weight-control">
-              <label>Image {index + 1}</label>
-              <div className="image-mode-selects">
-                <select
-                  value={imageModes[index]}
-                  onChange={(e) => setImageMode(index, e.target.value)}
-                  className="mode-select-small"
-                >
-                  {mixingMode === 'MAGNITUDE_PHASE' ? (
-                    <>
-                      <option value="MAGNITUDE">Magnitude</option>
-                      <option value="PHASE">Phase</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="REAL">Real</option>
-                      <option value="IMAGINARY">Imaginary</option>
-                    </>
-                  )}
-                </select>
-                {/* Per-image region mode selector - only when Inner/Outer is selected */}
-                {regionMode === 'INNER_OUTER' && (
-                  <select
-                    value={imageRegionModes[index]}
-                    onChange={(e) => setImageRegionMode(index, e.target.value)}
-                    className="mode-select-small region-select"
-                  >
-                    <option value="INNER">Inner</option>
-                    <option value="OUTER">Outer</option>
-                  </select>
-                )}
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={imageWeights[index]}
-                onChange={(e) => handleWeightChange(index, e.target.value)}
-                className="weight-slider"
-              />
-              <span className="weight-value">{imageWeights[index]}%</span>
-            </div>
+            <ImageControl
+              key={index}
+              index={index}
+              mode={imageModes[index]}
+              regionMode={imageRegionModes[index]}
+              globalRegionMode={regionMode}
+              globalMixingMode={mixingMode}
+              weight={imageWeights[index]}
+              onModeChange={setImageMode}
+              onRegionModeChange={setImageRegionMode}
+              onWeightChange={handleWeightChange}
+            />
           ))}
         </div>
       </div>
