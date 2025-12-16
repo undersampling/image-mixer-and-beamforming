@@ -30,6 +30,13 @@ class MixRequestSerializer(serializers.Serializer):
         max_length=4
     )
     region_mode = serializers.CharField()
+    image_region_modes = serializers.ListField(
+        child=serializers.CharField(),
+        min_length=4,
+        max_length=4,
+        required=False,  # Optional for backward compatibility
+        default=['INNER', 'INNER', 'INNER', 'INNER']
+    )
     output_viewer = serializers.IntegerField(min_value=0, max_value=1)
     current_mode = serializers.CharField()
 

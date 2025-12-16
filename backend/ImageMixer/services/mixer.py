@@ -66,7 +66,7 @@ class Mixer:
         
         return region_image
     
-    def mix(self, weights, boundaries, region_mode):
+    def mix(self, weights, boundaries, region_mode, image_region_modes=None):
         """
         Mix images based on weights, boundaries, and region mode.
         
@@ -81,10 +81,15 @@ class Mixer:
             weights: List of weights for each image (0-1 range, normalized from 0-100)
             boundaries: List of [left, top, right, bottom] coordinates
             region_mode: RegionMode enum
+            image_region_modes: List of per-image RegionMode enums (used when region_mode is INNER_OUTER)
         
         Returns:
             numpy array of the mixed image
         """
+        # Default image region modes if not provided
+        if image_region_modes is None:
+            image_region_modes = [RegionMode.INNER, RegionMode.INNER, RegionMode.INNER, RegionMode.INNER]
+        
         # Initialize result variables (matching original implementation)
         resulted_mix_magnitude = 0
         resulted_mix_phase = 0
@@ -99,7 +104,15 @@ class Mixer:
                 if not self.images_list[image_number].loaded:
                     continue
                 
-                region_image = self.get_region_image(image_number, region_mode, boundaries)
+                # Determine which region mode to use for this image
+                if region_mode == RegionMode.INNER_OUTER:
+                    # Use per-image region mode
+                    effective_region_mode = image_region_modes[image_number]
+                else:
+                    # Use global region mode (FULL, INNER, or OUTER)
+                    effective_region_mode = region_mode
+                
+                region_image = self.get_region_image(image_number, effective_region_mode, boundaries)
                 image_magnitude = np.abs(region_image)
                 image_phase = np.angle(region_image)
                 
@@ -131,7 +144,15 @@ class Mixer:
                 if not self.images_list[image_number].loaded:
                     continue
                 
-                region_image = self.get_region_image(image_number, region_mode, boundaries)
+                # Determine which region mode to use for this image
+                if region_mode == RegionMode.INNER_OUTER:
+                    # Use per-image region mode
+                    effective_region_mode = image_region_modes[image_number]
+                else:
+                    # Use global region mode (FULL, INNER, or OUTER)
+                    effective_region_mode = region_mode
+                
+                region_image = self.get_region_image(image_number, effective_region_mode, boundaries)
                 image_real = np.real(region_image)
                 image_imag = np.imag(region_image)
                 

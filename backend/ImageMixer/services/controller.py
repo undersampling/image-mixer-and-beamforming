@@ -84,13 +84,14 @@ class Controller:
             self.update_image_processing()
             self.logger.info(f"Reset brightness/contrast for image {image_index}")
     
-    def mix_all(self, output_viewer_number, region_mode):
+    def mix_all(self, output_viewer_number, region_mode, image_region_modes=None):
         """
         Mix all images and return the result.
         
         Args:
             output_viewer_number: Which output viewer (0 or 1)
             region_mode: RegionMode enum
+            image_region_modes: List of per-image RegionMode enums for INNER_OUTER mode
         
         Returns:
             numpy array of mixed image
@@ -106,7 +107,11 @@ class Controller:
             temp_weights = self.image_weights.copy()
             normalized_weights = [weight / 100.0 for weight in self.image_weights]
             
-            mixer_result = self.Mixer.mix(normalized_weights, self.rect, region_mode)
+            # Default image region modes if not provided
+            if image_region_modes is None:
+                image_region_modes = [RegionMode.INNER, RegionMode.INNER, RegionMode.INNER, RegionMode.INNER]
+            
+            mixer_result = self.Mixer.mix(normalized_weights, self.rect, region_mode, image_region_modes)
             mixer_result_normalized = cv2.normalize(
                 mixer_result, None, 0, 255, cv2.NORM_MINMAX
             ).astype(np.uint8)

@@ -84,27 +84,35 @@ html, body {
   width: 300px;
   min-width: 300px;
   max-width: 300px;
-  overflow-y: auto;
-  overflow-x: hidden;
   height: 100%;
+  display: flex;
+  flex-direction: column;
   padding-right: 0.5rem;
 }
 
-.controls-left::-webkit-scrollbar {
+/* Scrollable area for control panel content */
+.controls-left-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+.controls-left-scrollable::-webkit-scrollbar {
   width: 8px;
 }
 
-.controls-left::-webkit-scrollbar-track {
+.controls-left-scrollable::-webkit-scrollbar-track {
   background: rgba(0, 36, 85, 0.3);
   border-radius: 4px;
 }
 
-.controls-left::-webkit-scrollbar-thumb {
+.controls-left-scrollable::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #0891B2, #22D3EE);
   border-radius: 4px;
 }
 
-.controls-left::-webkit-scrollbar-thumb:hover {
+.controls-left-scrollable::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #22D3EE, #0891B2);
 }
 

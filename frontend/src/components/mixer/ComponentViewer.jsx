@@ -55,7 +55,7 @@ export const ComponentViewer = ({ imageIndex }) => {
 
   // Update ROI boundaries when region mode changes or component image loads
   useEffect(() => {
-    if (componentImage && (regionMode === 'INNER' || regionMode === 'OUTER')) {
+    if (componentImage && regionMode === 'INNER_OUTER') {
       const timer = setTimeout(() => {
         const img = containerRef.current?.querySelector('.component-image');
         if (img && img.complete) {
@@ -253,7 +253,7 @@ export const ComponentViewer = ({ imageIndex }) => {
           
           // Use a very short debounce (30ms) for near real-time feel
           updateTimeoutRef.current = setTimeout(() => {
-            if (regionMode === 'INNER' || regionMode === 'OUTER') {
+            if (regionMode === 'INNER_OUTER') {
               // Pass the latest boundaries directly to avoid stale state
               mixImages(newBoundaries);
             }
@@ -315,7 +315,7 @@ export const ComponentViewer = ({ imageIndex }) => {
             className="component-image"
             onLoad={handleImageLoad}
           />
-          {(regionMode === 'INNER' || regionMode === 'OUTER') && componentImage && (
+          {regionMode === 'INNER_OUTER' && componentImage && (
             <div
               className="roi-overlay"
               style={{

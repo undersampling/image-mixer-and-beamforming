@@ -128,6 +128,7 @@ def mix_images(request):
         weights = serializer.validated_data['weights']
         boundaries = serializer.validated_data['boundaries']
         region_mode_str = serializer.validated_data['region_mode']
+        image_region_modes = serializer.validated_data.get('image_region_modes', ['INNER', 'INNER', 'INNER', 'INNER'])
         output_viewer = serializer.validated_data['output_viewer']
         current_mode_str = serializer.validated_data.get('current_mode', 'MAGNITUDE_PHASE')
         
@@ -136,12 +137,17 @@ def mix_images(request):
             region_mode = RegionMode[region_mode_str.upper()]
             current_mode = Mode[current_mode_str.upper()]
             
+            # Convert per-image region modes to enums
+            image_region_mode_enums = []
+            for mode_str in image_region_modes:
+                image_region_mode_enums.append(RegionMode[mode_str.upper()])
+            
             controller.Mixer.current_mode = current_mode
             controller.image_weights = weights
             controller.set_roi_boundaries(boundaries)
             controller.update_image_processing()
             
-            result = controller.mix_all(output_viewer, region_mode)
+            result = controller.mix_all(output_viewer, region_mode, image_region_mode_enums)
             image_base64 = numpy_to_base64(result)
             
             return Response({

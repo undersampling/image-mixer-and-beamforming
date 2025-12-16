@@ -14,4 +14,5 @@ class RegionMode(Enum):
     OUTER = "outer"
     INNER = "inner"
     FULL = "full"
+    INNER_OUTER = "inner_outer"  # Per-image region mode
 
