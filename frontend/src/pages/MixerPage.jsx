@@ -5,6 +5,7 @@ import { ImageViewer } from '../components/mixer/ImageViewer';
 import { ComponentViewer } from '../components/mixer/ComponentViewer';
 import { OutputViewer } from '../components/mixer/OutputViewer';
 import { ControlPanel } from '../components/mixer/ControlPanel';
+import { MixerProgressBar } from '../components/mixer/MixerProgressBar';
 import '../styles/MixerPage.css';
 import '../styles/ImageViewer.css';
 import '../styles/ComponentViewer.css';
@@ -78,6 +79,7 @@ export function PartAPage() {
                   </svg>
                   Go to Beamforming
                 </button>
+                <MixerProgressBar />
               </div>
 
               {/* Scrollable Control Panel Content */}

@@ -6,9 +6,9 @@ export const MixerProgressBar = () => {
   const { isMixing, mixingProgress } = useImageMixer();
 
   return (
-    <div className="control-section" style={{ marginBottom: 0, paddingTop: '0' }}>
+    <div className="control-section" >
       <h3 style={{ marginBottom: '0.8rem' }}>Processing</h3>
-      
+
 
       <div className="mixing-progress-container">
         <div 

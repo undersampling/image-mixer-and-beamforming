@@ -115,23 +115,7 @@ export const ControlPanel = () => {
         </button>
       </div>
 
-      {/* Sticky Header - Progress Bar only */}
-      <div className="control-panel-sticky-header">
-        {/* Progress Bar - always visible at top */}
-        <div className="control-section">
-          <h3>Processing</h3>
-          <div className="mixing-progress-container">
-            <div className="progress-bar" style={{ width: `${mixingProgress}%` }}></div>
-            <span className="progress-text">
-              {isMixing 
-                ? `Mixing... ${mixingProgress}%` 
-                : mixingProgress === 100 
-                  ? 'Complete!' 
-                  : 'Ready'}
-            </span>
-          </div>
-        </div>
-      </div>
+
 
       <div className="control-section">
         <h3>Mixing Mode</h3>
