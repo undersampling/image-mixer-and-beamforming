@@ -151,33 +151,43 @@ export const ImageMixerProvider = ({ children }) => {
     }
   }, []);
 
+  const pollIntervalRef = useRef(null);
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
+
   const mixImages = useCallback(async (customBoundaries = null) => {
+    // 1. Cancel/Clear previous operation logic
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    
+    // We can also call backend cancel endpoint if we want absolute cleanup
+    // await axios.post(`${API_BASE_URL}/mix-cancel/`);
+
     if (mixCancelToken) {
-      mixCancelToken.cancel('New mixing request');
+        mixCancelToken.cancel('New mixing request');
     }
 
     const CancelToken = axios.CancelToken;
     const source = CancelToken.source();
     setMixCancelToken(source);
     setIsMixing(true);
-    setMixingProgress(0);
+    setMixingProgress(0); // Reset to 0 initially
 
     try {
-      const progressInterval = setInterval(() => {
-        setMixingProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 10;
-        });
-      }, 100);
-
       // Use custom boundaries if provided, otherwise use state boundaries
-      // Use refs to get latest values for real-time updates
       const boundariesToUse = customBoundaries || roiBoundaries;
 
-      const response = await axios.post(`${API_BASE_URL}/mix/`, {
+      // 2. Start Mixing Task (Async)
+      const startResponse = await axios.post(`${API_BASE_URL}/mix/`, {
         weights: imageWeightsRef.current,
         boundaries: boundariesToUse,
         region_mode: regionModeRef.current,
@@ -188,28 +198,68 @@ export const ImageMixerProvider = ({ children }) => {
         cancelToken: source.token
       });
 
-      clearInterval(progressInterval);
-      setMixingProgress(100);
-
-      if (response.data.success) {
-        const newOutputImages = [...outputImagesRef.current];
-        newOutputImages[currentOutputViewerRef.current] = response.data.image_data;
-        setOutputImages(newOutputImages);
+      if (!startResponse.data.success) {
         setIsMixing(false);
-        setMixCancelToken(null);
-        setTimeout(() => setMixingProgress(0), 500);
-        return { success: true, data: response.data };
+        setMixingProgress(0);
+        return { success: false, error: startResponse.data.error };
       }
-      setIsMixing(false);
-      setMixCancelToken(null);
-      setMixingProgress(0);
-      return { success: false, error: response.data.error };
+      
+      // 3. Start Polling for Status
+      return new Promise((resolve) => {
+        pollIntervalRef.current = setInterval(async () => {
+            try {
+                const statusResponse = await axios.get(`${API_BASE_URL}/mix-status/`);
+                if (statusResponse.data.success) {
+                    const { is_mixing, progress, error } = statusResponse.data;
+                    
+                    setMixingProgress(progress);
+                    
+                    if (error) {
+                        clearInterval(pollIntervalRef.current);
+                        setIsMixing(false);
+                        resolve({ success: false, error });
+                        return;
+                    }
+                    
+                    if (!is_mixing && progress === 100) {
+                        // 4. Task Completed, Fetch Result
+                        clearInterval(pollIntervalRef.current);
+                        
+                        // Fetch final result
+                        const resultResponse = await axios.get(`${API_BASE_URL}/mix-result/`);
+                        
+                        if (resultResponse.data.success) {
+                            const newOutputImages = [...outputImagesRef.current];
+                            newOutputImages[currentOutputViewerRef.current] = resultResponse.data.image_data;
+                            setOutputImages(newOutputImages);
+                            resolve({ success: true, data: resultResponse.data });
+                        } else {
+                            resolve({ success: false, error: "Failed to fetch result" });
+                        }
+                        
+                        setIsMixing(false);
+                        setMixCancelToken(null);
+                        // Delay clearing progress bar for UX
+                        setTimeout(() => setMixingProgress(0), 500);
+                    }
+                }
+            } catch (err) {
+                console.error("Polling error", err);
+                // Don't stop polling on transient network errors, but maybe count them.
+                // For now, if 500, stop.
+                if (err.response && err.response.status >= 400) {
+                     clearInterval(pollIntervalRef.current);
+                     setIsMixing(false);
+                     resolve({ success: false, error: err.message });
+                }
+            }
+        }, 100); // Poll every 100ms
+      });
+
     } catch (error) {
       if (axios.isCancel(error)) {
         console.log('Mixing cancelled');
-        setIsMixing(false);
-        setMixCancelToken(null);
-        setMixingProgress(0);
+        // Do not affect state here as the new request will take over
         return { success: false, error: 'Cancelled' };
       }
       console.error('Error mixing images:', error);

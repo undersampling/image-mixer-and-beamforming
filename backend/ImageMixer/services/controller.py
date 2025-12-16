@@ -4,6 +4,7 @@ from ImageMixer.services.modes_enum import RegionMode
 import numpy as np
 import cv2
 import logging
+import threading
 
 
 class Controller:
@@ -23,6 +24,15 @@ class Controller:
         self.min_width = 50000
         self.image_weights = [0, 0, 0, 0]
         self.rect = []
+        
+        # Async Task Management
+        self.mixing_thread = None
+        self.cancel_flag = False
+        self.is_mixing = False
+        self.progress = 0
+        self.latest_result = None
+        self.latest_error = None
+        self.task_lock = threading.Lock()
     
     def add_image(self, image_data, image_index):
         """
@@ -84,6 +94,121 @@ class Controller:
             self.update_image_processing()
             self.logger.info(f"Reset brightness/contrast for image {image_index}")
     
+    # --- Async Mixing Methods ---
+    
+    def start_mixing_async(self, output_viewer_number, region_mode, image_region_modes=None):
+        """Start mixing in a background thread."""
+        with self.task_lock:
+            # Cancel existing task if running
+            if self.is_mixing:
+                self.cancel_flag = True
+                if self.mixing_thread and self.mixing_thread.is_alive():
+                    # We can't force kill, but we set the flag
+                    pass
+            
+            # Reset state
+            self.cancel_flag = False
+            self.is_mixing = True
+            self.progress = 0
+            self.latest_error = None
+            
+            # Start new thread
+            self.mixing_thread = threading.Thread(
+                target=self._mix_worker,
+                args=(output_viewer_number, region_mode, image_region_modes)
+            )
+            self.mixing_thread.daemon = True
+            self.mixing_thread.start()
+            
+    def _mix_worker(self, output_viewer_number, region_mode, image_region_modes):
+        """Worker function for async mixing."""
+        try:
+            self.progress = 5
+            if self.cancel_flag: return
+            
+            # --- START LOGIC FROM mix_all ---
+            
+            # Ensure all images are processed and same size before mixing
+            self.update_image_processing()
+            self.progress = 10
+            if self.cancel_flag: return
+            
+            self.current_region_mode = region_mode
+            self.Mixer.images_list = self.list_of_images
+            
+            # Normalize weights to 0-1 range
+            temp_weights = self.image_weights.copy()
+            normalized_weights = [weight / 100.0 for weight in self.image_weights]
+            
+            if self.cancel_flag: return
+            
+            # Default image region modes if not provided
+            if image_region_modes is None:
+                image_region_modes = [RegionMode.INNER, RegionMode.INNER, RegionMode.INNER, RegionMode.INNER]
+                
+            # Optimized check: if all weights are zero, return None (clears output)
+            if sum(normalized_weights) == 0:
+                self.latest_result = None
+                self.is_mixing = False
+                self.progress = 100
+                return
+            
+            self.progress = 20
+            if self.cancel_flag: return
+            
+            # Perform Mix
+            mixer_result = self.Mixer.mix(normalized_weights, self.rect, region_mode, image_region_modes)
+            
+            self.progress = 80
+            if self.cancel_flag: return
+            
+            # Check for black result
+            if np.max(np.abs(mixer_result)) < 1e-10:
+                self.latest_result = None
+                if output_viewer_number == 0:
+                    self.result_image_1 = None
+                else:
+                    self.result_image_2 = None
+                self.is_mixing = False
+                self.progress = 100
+                return
+
+            mixer_result_normalized = cv2.normalize(
+                mixer_result, None, 0, 255, cv2.NORM_MINMAX
+            ).astype(np.uint8)
+            
+            self.progress = 90
+            
+            result_image = CustomImage(mixer_result_normalized)
+            result_image.loaded = True
+            
+            if output_viewer_number == 0:
+                self.result_image_1 = result_image
+            else:
+                self.result_image_2 = result_image
+            
+            self.latest_result = mixer_result_normalized
+            self.progress = 100
+            self.is_mixing = False
+            
+        except Exception as e:
+            self.logger.error(f"Async mixing error: {e}", exc_info=True)
+            self.latest_error = str(e)
+            self.is_mixing = False
+
+    def get_status(self):
+        return {
+            'is_mixing': self.is_mixing,
+            'progress': self.progress,
+            'error': self.latest_error
+        }
+    
+    def get_result(self):
+        return self.latest_result
+
+    def cancel_mixing(self):
+        self.cancel_flag = True
+
     def mix_all(self, output_viewer_number, region_mode, image_region_modes=None):
         """
         Mix all images and return the result.

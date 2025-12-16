@@ -41,6 +41,7 @@ export const ControlPanel = () => {
   const prevValuesRef = React.useRef({
     imageWeights: JSON.stringify(imageWeights),
     imageRegionModes: JSON.stringify(imageRegionModes),
+    imageModes: JSON.stringify(imageModes),
     mixingMode,
     regionMode,
     currentOutputViewer
@@ -57,6 +58,7 @@ export const ControlPanel = () => {
     const currentValues = {
       imageWeights: JSON.stringify(imageWeights),
       imageRegionModes: JSON.stringify(imageRegionModes),
+      imageModes: JSON.stringify(imageModes),
       mixingMode,
       regionMode,
       currentOutputViewer
@@ -65,6 +67,7 @@ export const ControlPanel = () => {
     const hasChanges = 
       currentValues.imageWeights !== prevValuesRef.current.imageWeights ||
       currentValues.imageRegionModes !== prevValuesRef.current.imageRegionModes ||
+      currentValues.imageModes !== prevValuesRef.current.imageModes ||
       currentValues.mixingMode !== prevValuesRef.current.mixingMode ||
       currentValues.regionMode !== prevValuesRef.current.regionMode ||
       currentValues.currentOutputViewer !== prevValuesRef.current.currentOutputViewer;
@@ -81,7 +84,7 @@ export const ControlPanel = () => {
     }, 300); // Debounce all mixing operations
 
     return () => clearTimeout(timeoutId);
-  }, [imageWeights, imageRegionModes, mixingMode, regionMode, currentOutputViewer, mixImages, isMixing]);
+  }, [imageWeights, imageRegionModes, imageModes, mixingMode, regionMode, currentOutputViewer, mixImages, isMixing]);
 
   // Handle bulk upload of 4 images at once
   const handleBulkUpload = async (e) => {

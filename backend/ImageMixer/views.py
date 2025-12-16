@@ -121,7 +121,7 @@ def get_image_component(request, image_index, component_type):
 
 @api_view(['POST'])
 def mix_images(request):
-    """Mix images based on weights and region mode."""
+    """Mix images based on weights and region mode (Async)."""
     serializer = MixRequestSerializer(data=request.data)
     
     if serializer.is_valid():
@@ -145,29 +145,71 @@ def mix_images(request):
             controller.Mixer.current_mode = current_mode
             controller.image_weights = weights
             controller.set_roi_boundaries(boundaries)
-            controller.update_image_processing()
             
-            result = controller.mix_all(output_viewer, region_mode, image_region_mode_enums)
-            
-            if result is None:
-                image_base64 = None
-            else:
-                image_base64 = numpy_to_base64(result)
+            # Start Async Mixing
+            controller.start_mixing_async(output_viewer, region_mode, image_region_mode_enums)
             
             return Response({
                 'success': True,
+                'status': 'started',
                 'output_viewer': output_viewer,
-                'image_data': image_base64
+                'message': 'Mixing started'
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            logger.error(f"Error mixing images: {e}", exc_info=True)
+            logger.error(f"Error starting mix: {e}", exc_info=True)
             return Response({
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def get_mix_status(request):
+    """Get current mixing status and progress."""
+    try:
+        status_info = controller.get_status()
+        return Response({
+            'success': True,
+            'is_mixing': status_info['is_mixing'],
+            'progress': status_info['progress'],
+            'error': status_info['error']
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error getting status: {e}", exc_info=True)
+        return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_mix_result(request):
+    """Get the result of the last mixing operation."""
+    try:
+        result = controller.get_result()
+        if result is None:
+            image_base64 = None
+        else:
+            image_base64 = numpy_to_base64(result)
+            
+        return Response({
+            'success': True,
+            'image_data': image_base64
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error getting result: {e}", exc_info=True)
+        return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def cancel_mixing(request):
+    """Cancel current mixing operation."""
+    try:
+        controller.cancel_mixing()
+        return Response({'success': True, 'message': 'Cancellation requested'}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error canceling: {e}", exc_info=True)
+        return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])

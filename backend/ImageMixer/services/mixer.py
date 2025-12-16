@@ -128,6 +128,18 @@ class Mixer:
             # Sum all magnitude contributions
             for weighted_mag in weighted_images_magnitudes:
                 resulted_mix_magnitude += weighted_mag
+                
+            # FIX: If we have phase but no magnitude (or magnitude is 0), set magnitude to 1
+            if len(weighted_images_phases) > 0:
+                # Check if magnitude is effectively zero
+                is_magnitude_zero = False
+                if isinstance(resulted_mix_magnitude, int) and resulted_mix_magnitude == 0:
+                    is_magnitude_zero = True
+                elif isinstance(resulted_mix_magnitude, np.ndarray) and np.max(np.abs(resulted_mix_magnitude)) < 1e-10:
+                    is_magnitude_zero = True
+                    
+                if is_magnitude_zero:
+                    resulted_mix_magnitude = 1
             
             # Sum all phase contributions
             for weighted_phase in weighted_images_phases:
