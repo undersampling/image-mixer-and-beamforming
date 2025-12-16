@@ -31,6 +31,12 @@ export function SimulatorProvider({ children }) {
   const [initializing, setInitializing] = useState(true);
   const [error, setError] = useState(null);
   const hasInitialized = useRef(false);
+  
+  // Progress tracking for parameter updates
+  const [calculationProgress, setCalculationProgress] = useState(0);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const abortControllerRef = useRef(null);
+  const progressIntervalRef = useRef(null);
 
   // Debounce config changes for real-time updates and auto-saving
   const debouncedConfig = useDebounce(config, 400);
@@ -149,23 +155,80 @@ export function SimulatorProvider({ children }) {
     });
   }, []);
 
-  // Calculate results
+  // Calculate results with progress tracking
   const calculate = useCallback(async () => {
     if (!debouncedConfig) return;
+
+    // Cancel any previous calculation
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    // Create new abort controller for this calculation
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    // Reset and start progress animation
+    setCalculationProgress(0);
+    setIsCalculating(true);
+    
+    // Animate progress from 0 to 90%
+    let currentProgress = 0;
+    progressIntervalRef.current = setInterval(() => {
+      if (currentProgress < 90) {
+        currentProgress += 10;
+        setCalculationProgress(currentProgress);
+      } else {
+        clearInterval(progressIntervalRef.current);
+      }
+    }, 100);
+
     try {
       setLoading(true);
       const data = await apiService.calculate(debouncedConfig);
+      
+      // Check if this calculation was cancelled
+      if (abortController.signal.aborted) {
+        return;
+      }
+      
+      // Complete the progress
+      clearInterval(progressIntervalRef.current);
+      setCalculationProgress(100);
+      
       setResults(data);
       setError(null);
+      
+      // Reset progress after a short delay
+      setTimeout(() => {
+        if (!abortController.signal.aborted) {
+          setCalculationProgress(0);
+          setIsCalculating(false);
+        }
+      }, 500);
     } catch (err) {
+      // Ignore abort errors
+      if (err.name === 'AbortError' || abortController.signal.aborted) {
+        return;
+      }
+      
       console.error("Calculation error:", err);
       setError(err.message);
+      clearInterval(progressIntervalRef.current);
+      setCalculationProgress(0);
+      setIsCalculating(false);
+      
       // If we're initializing and calculation fails, still mark as done to avoid stuck state
       if (initializing) {
         setInitializing(false);
       }
     } finally {
-      setLoading(false);
+      if (!abortController.signal.aborted) {
+        setLoading(false);
+      }
     }
   }, [debouncedConfig, initializing]);
 
@@ -382,6 +445,8 @@ export function SimulatorProvider({ children }) {
     loading,
     initializing,
     error,
+    calculationProgress,
+    isCalculating,
     loadScenario,
     saveScenario,
     resetScenario,

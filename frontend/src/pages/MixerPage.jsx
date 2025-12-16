@@ -38,28 +38,28 @@ export function PartAPage() {
                   gap: '10px',
                   padding: '14px 20px',
                   marginBottom: '20px',
-                  backgroundColor: '#FF3838',
-                  border: '1px solid #ff38384d',
+                  backgroundColor: '#0891B2',
+                  border: '1px solid rgba(8, 145, 178, 0.5)',
                   borderRadius: '12px',
                   color: '#ffffff',
                   fontSize: '0.95rem',
                   fontWeight: '600',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+                  boxShadow: '0 4px 6px -1px rgba(8, 145, 178, 0.3), 0 2px 4px -1px rgba(8, 145, 178, 0.2)',
                   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   flexShrink: 0
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
-                  e.currentTarget.style.color = '#0f172a';
-                  e.currentTarget.style.borderColor = '#cbd5e1';
+                  e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(34, 211, 238, 0.3), 0 4px 6px -2px rgba(34, 211, 238, 0.2)';
+                  e.currentTarget.style.backgroundColor = '#22D3EE';
+                  e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.7)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)';
-                  e.currentTarget.style.color = '#ffffff';
-                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(8, 145, 178, 0.3), 0 2px 4px -1px rgba(8, 145, 178, 0.2)';
+                  e.currentTarget.style.backgroundColor = '#0891B2';
+                  e.currentTarget.style.borderColor = 'rgba(8, 145, 178, 0.5)';
                 }}
               >
                 <svg 

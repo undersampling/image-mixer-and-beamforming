@@ -17,8 +17,9 @@ export const ImageMixerProvider = ({ children }) => {
   const [images, setImages] = useState([null, null, null, null]);
   const [imageWeights, setImageWeights] = useState([0, 0, 0, 0]);
   const [imageModes, setImageModes] = useState(['MAGNITUDE', 'MAGNITUDE', 'MAGNITUDE', 'MAGNITUDE']);
+  const [imageRegionModes, setImageRegionModes] = useState(['INNER', 'INNER', 'INNER', 'INNER']); // Per-image region modes
   const [mixingMode, setMixingMode] = useState('MAGNITUDE_PHASE');
-  const [regionMode, setRegionMode] = useState('FULL');
+  const [regionMode, setRegionMode] = useState('FULL'); // FULL or INNER_OUTER
   const [roiBoundaries, setRoiBoundaries] = useState([0, 0, 100, 100]);
   const [roiState, setRoiState] = useState({ x: 50, y: 50, width: 100, height: 100 });
   const [outputImages, setOutputImages] = useState([null, null]);
@@ -31,6 +32,7 @@ export const ImageMixerProvider = ({ children }) => {
   // Refs to store latest values for real-time updates
   const imageWeightsRef = useRef(imageWeights);
   const regionModeRef = useRef(regionMode);
+  const imageRegionModesRef = useRef(imageRegionModes);
   const currentOutputViewerRef = useRef(currentOutputViewer);
   const mixingModeRef = useRef(mixingMode);
   const outputImagesRef = useRef(outputImages);
@@ -43,6 +45,10 @@ export const ImageMixerProvider = ({ children }) => {
   useEffect(() => {
     regionModeRef.current = regionMode;
   }, [regionMode]);
+  
+  useEffect(() => {
+    imageRegionModesRef.current = imageRegionModes;
+  }, [imageRegionModes]);
   
   useEffect(() => {
     currentOutputViewerRef.current = currentOutputViewer;
@@ -79,6 +85,54 @@ export const ImageMixerProvider = ({ children }) => {
       console.error('Error uploading image:', error);
       return { success: false, error: error.message };
     }
+  }, [images]);
+
+  // Upload multiple images at once (up to 4)
+  const uploadMultipleImages = useCallback(async (files) => {
+    const filesToUpload = Array.from(files).slice(0, 4); // Limit to 4 files
+    const results = [];
+    const newImages = [...images];
+    
+    setIsMixing(true);
+    setMixingProgress(0);
+    
+    for (let i = 0; i < filesToUpload.length; i++) {
+      const file = filesToUpload[i];
+      
+      // Update progress
+      setMixingProgress(Math.round(((i + 0.5) / filesToUpload.length) * 100));
+      
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('image_index', i);
+
+        const response = await axios.post(`${API_BASE_URL}/upload-image/`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        if (response.data.success) {
+          newImages[i] = response.data.image_data;
+          results.push({ success: true, index: i });
+        } else {
+          results.push({ success: false, index: i, error: response.data.error });
+        }
+      } catch (error) {
+        console.error(`Error uploading image ${i}:`, error);
+        results.push({ success: false, index: i, error: error.message });
+      }
+      
+      // Update progress after each upload
+      setMixingProgress(Math.round(((i + 1) / filesToUpload.length) * 100));
+    }
+    
+    setImages(newImages);
+    setIsMixing(false);
+    setTimeout(() => setMixingProgress(0), 500);
+    
+    return results;
   }, [images]);
 
   const getImageComponent = useCallback(async (imageIndex, componentType) => {
@@ -127,6 +181,7 @@ export const ImageMixerProvider = ({ children }) => {
         weights: imageWeightsRef.current,
         boundaries: boundariesToUse,
         region_mode: regionModeRef.current,
+        image_region_modes: imageRegionModesRef.current,
         output_viewer: currentOutputViewerRef.current,
         current_mode: mixingModeRef.current,
       }, {
@@ -225,6 +280,13 @@ export const ImageMixerProvider = ({ children }) => {
     }
   }, [imageModes]);
 
+  // Set region mode (INNER/OUTER) for a specific image
+  const setImageRegionMode = useCallback((imageIndex, mode) => {
+    const newRegionModes = [...imageRegionModes];
+    newRegionModes[imageIndex] = mode;
+    setImageRegionModes(newRegionModes);
+  }, [imageRegionModes]);
+
   const updateMixingMode = useCallback(async (mode) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/set-mixing-mode/`, {
@@ -263,6 +325,8 @@ export const ImageMixerProvider = ({ children }) => {
     setImageWeights,
     imageModes,
     setImageMode,
+    imageRegionModes,
+    setImageRegionMode,
     mixingMode,
     setMixingMode: updateMixingMode,
     regionMode,
@@ -280,6 +344,7 @@ export const ImageMixerProvider = ({ children }) => {
     mixingProgress,
     mixImages,
     uploadImage,
+    uploadMultipleImages,
     getImageComponent,
     adjustBrightnessContrast,
     resetBrightnessContrast,

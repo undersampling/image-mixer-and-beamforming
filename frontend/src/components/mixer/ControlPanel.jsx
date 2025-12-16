@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useImageMixer } from './ImageMixerContext';
 import '../../styles/ControlPanel.css';
 
@@ -14,6 +14,8 @@ export const ControlPanel = () => {
     setImageWeights,
     imageModes,
     setImageMode,
+    imageRegionModes,
+    setImageRegionMode,
     mixingMode,
     setMixingMode,
     regionMode,
@@ -23,13 +25,25 @@ export const ControlPanel = () => {
     mixImages,
     isMixing,
     mixingProgress,
+    uploadMultipleImages,
   } = useImageMixer();
+  
+  const fileInputRef = useRef(null);
 
   const handleWeightChange = (index, value) => {
     const newWeights = [...imageWeights];
     newWeights[index] = parseInt(value);
     setImageWeights(newWeights);
   };
+
+  // Track previous values to detect actual changes
+  const prevValuesRef = React.useRef({
+    imageWeights: JSON.stringify(imageWeights),
+    imageRegionModes: JSON.stringify(imageRegionModes),
+    mixingMode,
+    regionMode,
+    currentOutputViewer
+  });
 
   // Debounced effect for all mixing triggers
   useEffect(() => {
@@ -38,15 +52,87 @@ export const ControlPanel = () => {
       return;
     }
 
+    // Check if any actual values changed (not just isMixing)
+    const currentValues = {
+      imageWeights: JSON.stringify(imageWeights),
+      imageRegionModes: JSON.stringify(imageRegionModes),
+      mixingMode,
+      regionMode,
+      currentOutputViewer
+    };
+
+    const hasChanges = 
+      currentValues.imageWeights !== prevValuesRef.current.imageWeights ||
+      currentValues.imageRegionModes !== prevValuesRef.current.imageRegionModes ||
+      currentValues.mixingMode !== prevValuesRef.current.mixingMode ||
+      currentValues.regionMode !== prevValuesRef.current.regionMode ||
+      currentValues.currentOutputViewer !== prevValuesRef.current.currentOutputViewer;
+
+    if (!hasChanges) {
+      return;
+    }
+
+    // Update previous values
+    prevValuesRef.current = currentValues;
+
     const timeoutId = setTimeout(() => {
       mixImages();
     }, 300); // Debounce all mixing operations
 
     return () => clearTimeout(timeoutId);
-  }, [imageWeights, mixingMode, regionMode, currentOutputViewer, mixImages, isMixing]);
+  }, [imageWeights, imageRegionModes, mixingMode, regionMode, currentOutputViewer, mixImages, isMixing]);
+
+  // Handle bulk upload of 4 images at once
+  const handleBulkUpload = async (e) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      await uploadMultipleImages(files);
+    }
+    // Reset the input so the same files can be selected again
+    e.target.value = '';
+  };
 
   return (
     <div className="control-panel">
+      {/* Hidden file input for bulk upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleBulkUpload}
+        accept="image/*"
+        multiple
+        style={{ display: 'none' }}
+      />
+      
+      {/* Upload 4 Images Button - NOT sticky */}
+      <div className="control-section">
+        <button
+          className="upload-all-button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isMixing}
+        >
+          Upload 4 Images
+        </button>
+      </div>
+
+      {/* Sticky Header - Progress Bar only */}
+      <div className="control-panel-sticky-header">
+        {/* Progress Bar - always visible at top */}
+        <div className="control-section">
+          <h3>Processing</h3>
+          <div className="mixing-progress-container">
+            <div className="progress-bar" style={{ width: `${mixingProgress}%` }}></div>
+            <span className="progress-text">
+              {isMixing 
+                ? `Mixing... ${mixingProgress}%` 
+                : mixingProgress === 100 
+                  ? 'Complete!' 
+                  : 'Ready'}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <div className="control-section">
         <h3>Mixing Mode</h3>
         <select
@@ -67,8 +153,7 @@ export const ControlPanel = () => {
           className="mode-select"
         >
           <option value="FULL">Full</option>
-          <option value="INNER">Inner</option>
-          <option value="OUTER">Outer</option>
+          <option value="INNER_OUTER">Inner / Outer</option>
         </select>
       </div>
 
@@ -90,7 +175,7 @@ export const ControlPanel = () => {
           {[0, 1, 2, 3].map((index) => (
             <div key={index} className="weight-control">
               <label>Image {index + 1}</label>
-              <div className="image-mode-select">
+              <div className="image-mode-selects">
                 <select
                   value={imageModes[index]}
                   onChange={(e) => setImageMode(index, e.target.value)}
@@ -108,6 +193,17 @@ export const ControlPanel = () => {
                     </>
                   )}
                 </select>
+                {/* Per-image region mode selector - only when Inner/Outer is selected */}
+                {regionMode === 'INNER_OUTER' && (
+                  <select
+                    value={imageRegionModes[index]}
+                    onChange={(e) => setImageRegionMode(index, e.target.value)}
+                    className="mode-select-small region-select"
+                  >
+                    <option value="INNER">Inner</option>
+                    <option value="OUTER">Outer</option>
+                  </select>
+                )}
               </div>
               <input
                 type="range"
@@ -122,15 +218,6 @@ export const ControlPanel = () => {
           ))}
         </div>
       </div>
-      
-      {isMixing && (
-        <div className="control-section">
-          <div className="mixing-progress-container">
-            <div className="progress-bar" style={{ width: `${mixingProgress}%` }}></div>
-            <span className="progress-text">{mixingProgress}%</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

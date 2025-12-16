@@ -109,3 +109,57 @@
   opacity: 0.3;
   cursor: not-allowed;
 }
+
+/* Sticky Progress Bar Container */
+.calculation-progress-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(10, 10, 10, 0.98) 85%, transparent 100%);
+  padding-bottom: 0.5rem;
+  margin: -0.5rem -0.5rem 0.5rem -0.5rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.calculation-progress-section {
+  width: 100%;
+}
+
+.progress-label {
+  margin: 0 0 0.4rem 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ccc;
+}
+
+/* Calculation Progress Bar Styles */
+.calculation-progress-container {
+  width: 100%;
+  height: 24px;
+  background: rgba(34, 211, 238, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(34, 211, 238, 0.3);
+}
+
+.calculation-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #22d3ee 0%, #f472b6 100%);
+  transition: width 0.15s ease-out;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+}
+
+.calculation-progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  color: #fff;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}

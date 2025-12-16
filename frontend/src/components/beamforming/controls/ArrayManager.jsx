@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSimulator } from "../../../context/SimulatorContext";
 import { Card } from "../../common/Card";
 import { Button } from "../../common/Button";
@@ -9,7 +9,7 @@ import { Dropdown } from "../../common/Dropdown";
 import "../../../styles/ArrayManager.css";
 
 export function ArrayManager() {
-  const { config, updateArray, addArray, removeArray } = useSimulator();
+  const { config, updateArray, addArray, removeArray, calculationProgress, isCalculating } = useSimulator();
   const [expandedArray, setExpandedArray] = useState(null);
 
   if (!config || !config.arrays) return null;
@@ -37,6 +37,26 @@ export function ArrayManager() {
 
   return (
     <Card title="Phased Arrays" defaultExpanded={true}>
+      {/* Sticky Progress Bar Container - Always visible */}
+      <div className="calculation-progress-sticky">
+        <div className="calculation-progress-section">
+          <h4 className="progress-label">Processing</h4>
+          <div className="calculation-progress-container">
+            <div 
+              className="calculation-progress-bar" 
+              style={{ width: `${calculationProgress}%` }}
+            />
+            <span className="calculation-progress-text">
+              {isCalculating 
+                ? `Updating... ${calculationProgress}%` 
+                : calculationProgress === 100 
+                  ? 'Complete!' 
+                  : 'Ready'}
+            </span>
+          </div>
+        </div>
+      </div>
+      
       <Button
         variant="primary"
         onClick={handleAddArray}
@@ -68,6 +88,14 @@ export function ArrayManager() {
     </Card>
   );
 }
+
+// Frequency unit options and conversion multipliers
+const FREQUENCY_UNITS = [
+  { value: "Hz", label: "Hz", multiplier: 1 },
+  { value: "kHz", label: "kHz", multiplier: 1e3 },
+  { value: "MHz", label: "MHz", multiplier: 1e6 },
+  { value: "GHz", label: "GHz", multiplier: 1e9 },
+];
 
 function ArrayConfig({
   array,
@@ -292,25 +320,63 @@ function ArrayConfig({
 }
 
 function FrequencyList({ frequencies, onChange }) {
-  const updateFreq = (index, value) => {
+  // State to track the unit for each frequency
+  const [freqUnits, setFreqUnits] = useState(() => 
+    frequencies.map(() => "Hz")
+  );
+
+  // Sync units array if frequencies change externally
+  useEffect(() => {
+    if (freqUnits.length !== frequencies.length) {
+      setFreqUnits(frequencies.map((_, i) => freqUnits[i] || "Hz"));
+    }
+  }, [frequencies.length]);
+
+  // Helper to get multiplier for a unit
+  const getMultiplier = (unit) => {
+    const unitObj = FREQUENCY_UNITS.find((u) => u.value === unit);
+    return unitObj ? unitObj.multiplier : 1;
+  };
+
+  // Convert Hz value to display value based on unit
+  const toDisplayValue = (hzValue, unit) => hzValue / getMultiplier(unit);
+  // Convert display value back to Hz
+  const toHzValue = (displayValue, unit) => displayValue * getMultiplier(unit);
+
+  // Dynamic step based on unit
+  const getStep = (unit) => {
+    const multiplier = getMultiplier(unit);
+    if (multiplier >= 1e9) return 0.1;  // GHz
+    if (multiplier >= 1e6) return 1;    // MHz
+    if (multiplier >= 1e3) return 10;   // kHz
+    return 100;                          // Hz
+  };
+
+  const updateFreq = (index, displayValue) => {
     const newFreqs = [...frequencies];
-    newFreqs[index] = value;
+    newFreqs[index] = toHzValue(displayValue, freqUnits[index]);
     onChange(newFreqs);
   };
 
+  const updateUnit = (index, newUnit) => {
+    const newUnits = [...freqUnits];
+    newUnits[index] = newUnit;
+    setFreqUnits(newUnits);
+  };
+
   const addFreq = () => {
-    onChange([
-      ...frequencies,
-      frequencies.length > 0
-        ? frequencies[frequencies.length - 1] + 1000
-        : 5000,
-    ]);
+    // Add new frequency with default unit Hz
+    const lastFreq = frequencies.length > 0 ? frequencies[frequencies.length - 1] : 5000;
+    onChange([...frequencies, lastFreq + 1000]);
+    setFreqUnits([...freqUnits, "Hz"]);
   };
 
   const removeFreq = (index) => {
     if (frequencies.length > 1) {
       const newFreqs = frequencies.filter((_, i) => i !== index);
+      const newUnits = freqUnits.filter((_, i) => i !== index);
       onChange(newFreqs);
+      setFreqUnits(newUnits);
     }
   };
 
@@ -323,22 +389,39 @@ function FrequencyList({ frequencies, onChange }) {
             display: "flex",
             gap: "0.5rem",
             marginBottom: "0.5rem",
-            alignItems: "center",
+            alignItems: "flex-end",
           }}
         >
           <NumberInput
             label={`f${idx + 1}`}
-            value={freq}
+            value={toDisplayValue(freq, freqUnits[idx] || "Hz")}
             onChange={(val) => updateFreq(idx, val)}
-            min={100}
-            max={10000000}
-            step={100}
-            unit="Hz"
+            min={0.001}
+            max={100000}
+            step={getStep(freqUnits[idx] || "Hz")}
           />
+          <select
+            className="dropdown"
+            value={freqUnits[idx] || "Hz"}
+            onChange={(e) => updateUnit(idx, e.target.value)}
+            style={{ 
+              padding: "0.5rem",
+              minWidth: "20px",
+              height: "38px",
+              marginBottom: "var(--spacing-md)"
+            }}
+          >
+            {FREQUENCY_UNITS.map((u) => (
+              <option key={u.value} value={u.value}>
+                {u.label}
+              </option>
+            ))}
+          </select>
           <button
             className="btn btn-danger"
             onClick={() => removeFreq(idx)}
             disabled={frequencies.length === 1}
+            style={{ marginBottom: "var(--spacing-md)" }}
           >
             ×
           </button>
@@ -352,11 +435,29 @@ function FrequencyList({ frequencies, onChange }) {
 }
 
 function FrequencyRange({ frequencies, onChange }) {
+  const [unit, setUnit] = useState("Hz");
+
+  // Helper to get multiplier for a unit
+  const getMultiplier = (u) => {
+    const unitObj = FREQUENCY_UNITS.find((uo) => uo.value === u);
+    return unitObj ? unitObj.multiplier : 1;
+  };
+
+  const multiplier = getMultiplier(unit);
+
+  // Convert Hz value to display value based on unit
+  const toDisplayValue = (hzValue) => hzValue / multiplier;
+  // Convert display value back to Hz
+  const toHzValue = (displayValue) => displayValue * multiplier;
+
   const minFreq = Math.min(...frequencies);
   const maxFreq = Math.max(...frequencies);
   const step = (maxFreq - minFreq) / Math.max(1, frequencies.length - 1);
 
-  const updateRange = (from, to, stepSize) => {
+  const updateRange = (fromDisplay, toDisplay, stepDisplay) => {
+    const from = toHzValue(fromDisplay);
+    const to = toHzValue(toDisplay);
+    const stepSize = toHzValue(stepDisplay);
     const count = Math.max(2, Math.floor((to - from) / stepSize) + 1);
     const newFreqs = [];
     for (let i = 0; i < count; i++) {
@@ -365,31 +466,54 @@ function FrequencyRange({ frequencies, onChange }) {
     onChange(newFreqs);
   };
 
+  // Dynamic step based on unit
+  const getStep = () => {
+    if (multiplier >= 1e9) return 0.1;  // GHz
+    if (multiplier >= 1e6) return 1;    // MHz
+    if (multiplier >= 1e3) return 10;   // kHz
+    return 100;                          // Hz
+  };
+
   return (
     <div>
+      <div style={{ marginBottom: "1rem" }}>
+        <label className="label">Unit</label>
+        <select
+          className="dropdown"
+          value={unit}
+          onChange={(e) => setUnit(e.target.value)}
+          style={{ width: "100%" }}
+        >
+          {FREQUENCY_UNITS.map((u) => (
+            <option key={u.value} value={u.value}>
+              {u.label}
+            </option>
+          ))}
+        </select>
+      </div>
       <NumberInput
-        label="From (Hz)"
-        value={minFreq}
-        onChange={(val) => updateRange(val, maxFreq, step)}
-        min={100}
-        max={10000000}
-        step={100}
+        label={`From (${unit})`}
+        value={toDisplayValue(minFreq)}
+        onChange={(val) => updateRange(val, toDisplayValue(maxFreq), toDisplayValue(step))}
+        min={0.001}
+        max={100000}
+        step={getStep()}
       />
       <NumberInput
-        label="To (Hz)"
-        value={maxFreq}
-        onChange={(val) => updateRange(minFreq, val, step)}
-        min={100}
-        max={10000000}
-        step={100}
+        label={`To (${unit})`}
+        value={toDisplayValue(maxFreq)}
+        onChange={(val) => updateRange(toDisplayValue(minFreq), val, toDisplayValue(step))}
+        min={0.001}
+        max={100000}
+        step={getStep()}
       />
       <NumberInput
-        label="Step (Hz)"
-        value={step}
-        onChange={(val) => updateRange(minFreq, maxFreq, val)}
-        min={100}
-        max={1000000}
-        step={100}
+        label={`Step (${unit})`}
+        value={toDisplayValue(step)}
+        onChange={(val) => updateRange(toDisplayValue(minFreq), toDisplayValue(maxFreq), val)}
+        min={0.001}
+        max={100000}
+        step={getStep()}
       />
       <div
         style={{
