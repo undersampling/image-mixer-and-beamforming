@@ -148,7 +148,11 @@ def mix_images(request):
             controller.update_image_processing()
             
             result = controller.mix_all(output_viewer, region_mode, image_region_mode_enums)
-            image_base64 = numpy_to_base64(result)
+            
+            if result is None:
+                image_base64 = None
+            else:
+                image_base64 = numpy_to_base64(result)
             
             return Response({
                 'success': True,

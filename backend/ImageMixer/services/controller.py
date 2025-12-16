@@ -110,8 +110,19 @@ class Controller:
             # Default image region modes if not provided
             if image_region_modes is None:
                 image_region_modes = [RegionMode.INNER, RegionMode.INNER, RegionMode.INNER, RegionMode.INNER]
+                
+            # Optimized check: if all weights are zero, return None (clears output)
+            if sum(normalized_weights) == 0:
+                self.result_image_1 = None if output_viewer_number == 0 else self.result_image_1 # Keep existing if any? No, should clear.
+                # Actually we just want to return None so the view sends null
+                return None
             
             mixer_result = self.Mixer.mix(normalized_weights, self.rect, region_mode, image_region_modes)
+            
+            # Additional check: if result is effectively zero (black), return None
+            if np.max(np.abs(mixer_result)) < 1e-10:
+                 return None
+
             mixer_result_normalized = cv2.normalize(
                 mixer_result, None, 0, 255, cv2.NORM_MINMAX
             ).astype(np.uint8)
