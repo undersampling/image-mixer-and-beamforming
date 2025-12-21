@@ -115,7 +115,7 @@ export function MediumSelector() {
   }));
 
   return (
-    <Card title="Propagation Medium (RF)" defaultExpanded={true}>
+    <Card title="Propagation Medium " defaultExpanded={true}>
       <Toggle
         label="Custom Speed"
         checked={useCustom}

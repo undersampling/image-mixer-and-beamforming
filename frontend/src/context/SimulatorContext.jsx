@@ -58,10 +58,10 @@ export function SimulatorProvider({ children }) {
     }
   }, []);
 
-  // Load media list
-  const loadMedia = useCallback(async () => {
+  // Load media list based on category (wireless = electromagnetic, medical = acoustic)
+  const loadMedia = useCallback(async (category = 'medical') => {
     try {
-      const data = await apiService.getMedia();
+      const data = await apiService.getMedia(category);
       setMedia(data);
     } catch (err) {
       setError(err.message);
@@ -79,6 +79,12 @@ export function SimulatorProvider({ children }) {
       setConfig(data);
       setError(null);
       
+      // Load appropriate media list based on scenario category
+      // 'wireless' = electromagnetic speeds (5G, radar)
+      // 'medical' = acoustic speeds (ultrasound, HIFU)
+      const category = data.category || 'medical';
+      await loadMedia(category);
+      
       // Mark as saved
       lastSavedRef.current = JSON.stringify(data);
       isDirtyRef.current = false;
@@ -91,7 +97,7 @@ export function SimulatorProvider({ children }) {
         isLoadingFromBackend.current = false;
       }, 1000);
     }
-  }, []);
+  }, [loadMedia]);
 
   // Save current scenario (auto-save to backend)
   const saveScenario = useCallback(
@@ -123,6 +129,10 @@ export function SimulatorProvider({ children }) {
       setConfig(data);
       setError(null);
       
+      // Load appropriate media list based on scenario category
+      const category = data.category || 'medical';
+      await loadMedia(category);
+      
       // Mark that we just loaded fresh data from backend
       // Update the lastSavedRef to prevent auto-save from triggering
       lastSavedRef.current = JSON.stringify(data);
@@ -136,7 +146,7 @@ export function SimulatorProvider({ children }) {
         isLoadingFromBackend.current = false;
       }, 1000);
     }
-  }, []);
+  }, [loadMedia]);
 
   // Update config
   const updateConfig = useCallback((updates) => {
@@ -371,7 +381,7 @@ export function SimulatorProvider({ children }) {
       setInitializing(true);
 
       try {
-        await loadMedia();
+        // Don't load media here - we'll load it after we know the scenario's category
         const scenariosData = await loadScenarios();
 
         // Check if we have saved state in localStorage
@@ -416,6 +426,11 @@ export function SimulatorProvider({ children }) {
             setCurrentScenario(scenarioIdToLoad);
             setConfig(data);
             setError(null);
+            
+            // Load appropriate media list based on scenario category
+            const category = data.category || 'medical';
+            await loadMedia(category);
+            
             // If we loaded from backend, treat that as already-saved state
             if (!shouldUseLocalStorage) {
               try {

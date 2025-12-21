@@ -40,9 +40,9 @@ export const apiService = {
     return response.data;
   },
 
-  // Media
-  getMedia: async () => {
-    const response = await api.get('/media/');
+  // Media - category can be 'wireless' (electromagnetic) or 'medical' (acoustic)
+  getMedia: async (category = 'medical') => {
+    const response = await api.get('/media/', { params: { category } });
     return response.data;
   },
 };

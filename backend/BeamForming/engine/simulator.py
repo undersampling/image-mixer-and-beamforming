@@ -5,14 +5,17 @@ from .phased_array import PhasedArray
 class BeamformingSimulator:
     """Main simulator managing multiple phased arrays and calculations."""
     
-    # Media speeds (m/s)
+    # Speed of sound in air (m/s)
+    C = 343
+    
+    # Media speeds for acoustic/ultrasound propagation in medical applications (m/s)
     MEDIA_SPEEDS = {
-        'air': 343,
-        'water': 1480,
-        'soft_tissue': 1540,
-        'muscle': 1580,
-        'fat': 1450,
-        'bone': 3500,
+        'air': 343,           # Speed of sound in air
+        'water': 1480,        # Speed of sound in water
+        'soft_tissue': 1540,  # Average speed in human soft tissue
+        'muscle': 1580,       # Speed in muscle tissue
+        'fat': 1450,          # Speed in fat tissue
+        'bone': 3500,         # Speed in bone
     }
     
     def __init__(self, config: dict = None):
@@ -22,7 +25,7 @@ class BeamformingSimulator:
             config: Optional configuration dictionary
         """
         self._arrays: Dict[str, PhasedArray] = {}
-        self._medium = {'name': 'air', 'speed': 343}
+        self._medium = {'name': 'air', 'speed': 343}  # Default to speed of sound in air
         self._visualization = {
             'x_range': [-10, 10],
             'y_range': [0, 10],
