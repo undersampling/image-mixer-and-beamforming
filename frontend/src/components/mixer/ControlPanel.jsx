@@ -28,7 +28,7 @@ export const ControlPanel = () => {
     mixingProgress,
     uploadMultipleImages,
   } = useImageMixer();
-  
+
   const fileInputRef = useRef(null);
 
   const handleWeightChange = (index, value) => {
@@ -49,8 +49,8 @@ export const ControlPanel = () => {
 
   // Debounced effect for all mixing triggers
   useEffect(() => {
-    // Don't mix if already mixing or no weights set
-    if (isMixing || !imageWeights.some(w => w > 0)) {
+    // Don't mix if already mixing
+    if (isMixing) {
       return;
     }
 
@@ -64,7 +64,7 @@ export const ControlPanel = () => {
       currentOutputViewer
     };
 
-    const hasChanges = 
+    const hasChanges =
       currentValues.imageWeights !== prevValuesRef.current.imageWeights ||
       currentValues.imageRegionModes !== prevValuesRef.current.imageRegionModes ||
       currentValues.imageModes !== prevValuesRef.current.imageModes ||
@@ -107,7 +107,7 @@ export const ControlPanel = () => {
         multiple
         style={{ display: 'none' }}
       />
-      
+
       {/* Upload 4 Images Button - NOT sticky */}
       <div className="control-section">
         <button
