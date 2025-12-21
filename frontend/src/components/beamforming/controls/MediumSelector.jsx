@@ -111,7 +111,7 @@ export function MediumSelector() {
 
   const mediumOptions = media.map(m => ({
     value: m.name,
-    label: `${m.name.charAt(0).toUpperCase() + m.name.slice(1).replace('_', ' ')} (${m.speed.toExponential()} m/s)`,
+    label: `${m.name.charAt(0).toUpperCase() + m.name.slice(1).replace('_', ' ')}`,
   }));
 
   return (

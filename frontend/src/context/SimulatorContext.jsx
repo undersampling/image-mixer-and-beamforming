@@ -44,6 +44,7 @@ export function SimulatorProvider({ children }) {
   // Keep track of last saved config string to detect unsaved changes
   const lastSavedRef = useRef(null);
   const isDirtyRef = useRef(false);
+  const isLoadingFromBackend = useRef(false);  // Flag to prevent auto-save after load/reset
 
   // Load scenarios list
   const loadScenarios = useCallback(async () => {
@@ -71,15 +72,24 @@ export function SimulatorProvider({ children }) {
   const loadScenario = useCallback(async (scenarioId) => {
     try {
       setLoading(true);
+      isLoadingFromBackend.current = true;  // Prevent auto-save
       const data = await apiService.getScenario(scenarioId);
 
       setCurrentScenario(scenarioId);
       setConfig(data);
       setError(null);
+      
+      // Mark as saved
+      lastSavedRef.current = JSON.stringify(data);
+      isDirtyRef.current = false;
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+      // Reset flag after a short delay to allow debounce to settle
+      setTimeout(() => {
+        isLoadingFromBackend.current = false;
+      }, 1000);
     }
   }, []);
 
@@ -107,14 +117,24 @@ export function SimulatorProvider({ children }) {
   const resetScenario = useCallback(async (scenarioId) => {
     try {
       setLoading(true);
+      isLoadingFromBackend.current = true;  // Prevent auto-save
       const data = await apiService.resetScenario(scenarioId);
 
       setConfig(data);
       setError(null);
+      
+      // Mark that we just loaded fresh data from backend
+      // Update the lastSavedRef to prevent auto-save from triggering
+      lastSavedRef.current = JSON.stringify(data);
+      isDirtyRef.current = false;
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+      // Reset flag after a short delay to allow debounce to settle
+      setTimeout(() => {
+        isLoadingFromBackend.current = false;
+      }, 1000);
     }
   }, []);
 
@@ -270,7 +290,7 @@ export function SimulatorProvider({ children }) {
 
   // Auto-save to backend when config changes (debounced)
   useEffect(() => {
-    if (debouncedConfig && currentScenario) {
+    if (debouncedConfig && currentScenario && !isLoadingFromBackend.current) {
       // Delay the auto-save slightly to avoid too many concurrent requests
       const timer = setTimeout(() => {
         saveScenario(currentScenario);
@@ -371,7 +391,7 @@ export function SimulatorProvider({ children }) {
         ) {
           scenarioIdToLoad = savedScenarioId;
           shouldUseLocalStorage = true;
-        } else {
+        } else { 
           // Otherwise use first scenario
           scenarioIdToLoad =
             scenariosData && scenariosData.length > 0

@@ -16,7 +16,7 @@ export function VisualizationContainer() {
     return (
       <div className="visualization-container loading">
         <LoadingSpinner />
-        <p style={{ color: "#64748b" }}>Calculating physics...</p>
+        <p style={{ color: "#64748b",display:"flex",justifyContent:"center" }}>Calculating physics...</p>
       </div>
     );
   }
