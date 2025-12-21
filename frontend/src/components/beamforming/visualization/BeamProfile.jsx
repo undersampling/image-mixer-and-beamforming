@@ -31,10 +31,18 @@ export function BeamProfile({ data, arrays }) {
     const finiteValues = allValues.filter((v) => Number.isFinite(v));
     const maxGain = finiteValues.length ? Math.max(...finiteValues) : 1;
     const minGain = finiteValues.length ? Math.min(...finiteValues) : 0;
-    const spread = maxGain - minGain || 1;
+    const spread = maxGain - minGain;
 
-    const normalize = (value) =>
-      Math.min(1, Math.max(0, (value - minGain) / spread));
+    // Normalize values to 0-1 range
+    // Special case: if spread is 0 (all values equal, like single element omnidirectional)
+    // then show full pattern at radius 1, not empty pattern at radius 0
+    const normalize = (value) => {
+      if (spread === 0) {
+        // All values are equal (omnidirectional) - show at full radius
+        return maxGain > 0 ? 1 : 0;
+      }
+      return Math.min(1, Math.max(0, (value - minGain) / spread));
+    };
 
     const gridColor = "#334155";
     const textColor = "#94a3b8";
