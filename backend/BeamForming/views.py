@@ -8,6 +8,7 @@ import json
 import traceback # IMPORTED FOR DEBUGGING
 from .engine.simulator import BeamformingSimulator
 from .engine.scenario_manager import ScenarioManager
+from .engine.media_config import get_media_list
 
 
 @csrf_exempt
@@ -116,28 +117,13 @@ def reset_all_scenarios(request):
 
 @require_http_methods(["GET"])
 def media_list(request):
-    """Get list of available media based on category (electromagnetic vs acoustic)."""
+    """Get list of available media based on category.
+    
+    Uses centralized media_config for single source of truth.
+    
+    Query params:
+        category: 'wireless' for electromagnetic, 'medical' for acoustic (default)
+    """
     category = request.GET.get('category', 'medical')
-    
-    if category == 'wireless':
-        # Electromagnetic wave speeds (m/s) - for 5G, WiFi, Radar
-        media = [
-            {'name': 'air', 'speed': 300000000},         # Speed of light
-            {'name': 'water', 'speed': 33333333},        # ~3.33e7 m/s
-            {'name': 'soft_tissue', 'speed': 40000000},  # ~4e7 m/s
-            {'name': 'muscle', 'speed': 42857143},       # ~4.29e7 m/s
-            {'name': 'fat', 'speed': 85714286},          # ~8.57e7 m/s
-            {'name': 'bone', 'speed': 75000000},         # 7.5e7 m/s
-        ]
-    else:
-        # Acoustic wave speeds (m/s) - for HIFU, ultrasound, sonar (default)
-        media = [
-            {'name': 'air', 'speed': 343},           # Speed of sound in air
-            {'name': 'water', 'speed': 1480},        # Speed of sound in water
-            {'name': 'soft_tissue', 'speed': 1540},  # Average speed in human soft tissue
-            {'name': 'muscle', 'speed': 1580},       # Speed in muscle tissue
-            {'name': 'fat', 'speed': 1450},          # Speed in fat tissue
-            {'name': 'bone', 'speed': 3500},         # Speed in bone
-        ]
-    
+    media = get_media_list(category)
     return JsonResponse(media, safe=False)

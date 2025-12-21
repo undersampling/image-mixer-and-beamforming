@@ -1,22 +1,13 @@
 import numpy as np
 from typing import Dict, List, Optional, Any
 from .phased_array import PhasedArray
+from .media_config import ACOUSTIC_MEDIA, get_medium_speed, DEFAULT_MEDIUM
 
 class BeamformingSimulator:
     """Main simulator managing multiple phased arrays and calculations."""
     
-    # Speed of sound in air (m/s)
-    C = 343
-    
-    # Media speeds for acoustic/ultrasound propagation in medical applications (m/s)
-    MEDIA_SPEEDS = {
-        'air': 343,           # Speed of sound in air
-        'water': 1480,        # Speed of sound in water
-        'soft_tissue': 1540,  # Average speed in human soft tissue
-        'muscle': 1580,       # Speed in muscle tissue
-        'fat': 1450,          # Speed in fat tissue
-        'bone': 3500,         # Speed in bone
-    }
+    # Reference to centralized media config (for backward compatibility)
+    MEDIA_SPEEDS = ACOUSTIC_MEDIA
     
     def __init__(self, config: dict = None):
         """
@@ -25,7 +16,8 @@ class BeamformingSimulator:
             config: Optional configuration dictionary
         """
         self._arrays: Dict[str, PhasedArray] = {}
-        self._medium = {'name': 'air', 'speed': 343}  # Default to speed of sound in air
+        # Default to acoustic speed in air
+        self._medium = {'name': DEFAULT_MEDIUM, 'speed': ACOUSTIC_MEDIA[DEFAULT_MEDIUM]}
         self._visualization = {
             'x_range': [-10, 10],
             'y_range': [0, 10],
@@ -56,8 +48,8 @@ class BeamformingSimulator:
                 self.add_array(array_config)
     
     def _get_medium_speed(self, medium_name: str) -> float:
-        """Get speed for known medium."""
-        return self.MEDIA_SPEEDS.get(medium_name, self.MEDIA_SPEEDS['air'])
+        """Get speed for known medium from centralized config."""
+        return self.MEDIA_SPEEDS.get(medium_name, self.MEDIA_SPEEDS[DEFAULT_MEDIUM])
     
     def _calculate_interference_map(self) -> Dict:
         """Vectorized calculation of interference map (field intensity over space)."""
