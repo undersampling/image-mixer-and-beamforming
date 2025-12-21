@@ -1,41 +1,50 @@
 {
   "id": "ultrasound_imaging",
-  "name": "Medical Ultrasound Probe",
-  "description": "Curved phased array for medical ultrasound imaging. Demonstrates focusing at different depths in soft tissue.",
+  "name": "Medical Ultrasound Imaging Probe",
+  "description": "Curved phased array probe for diagnostic medical ultrasound imaging with dynamic focusing in soft tissue.",
   "category": "medical",
-  
+
   "medium": {
     "name": "soft_tissue",
-    "speed": 1540
+    "speed": 1540,
+    "density": 1000,
+    "attenuation": 0.5
   },
-  
+
   "visualization": {
-    "x_range": [-10, 10],
-    "y_range": [0, 10],
-    "resolution": 150
+    "x_range": [-0.06, 0.06],
+    "y_range": [0.0, 0.12],
+    "resolution": 300
   },
-  
+
   "arrays": [
     {
       "id": "probe_array",
-      "name": "Ultrasound Probe",
+      "name": "Curved Ultrasound Probe",
       "type": "curved",
-      "num_elements": 64,
+      "num_elements": 128,
       "element_spacing": 0.0003,
-      "curvature_radius": 0.04,
-      "arc_angle": 60,
-      "frequencies": [5000000],
+      "curvature_radius": 0.05,
+      "arc_angle": 70,
+      "frequencies": [3500000],
+      "bandwidth": 0.6,
       "steering_angle": 0,
-      "focus_point": {"x": 0, "y": 0.05},
-      "position": {"x": 0, "y": 0},
-      "rotation": 0
+      "focus_point": { "x": 0.0, "y": 0.06 },
+      "position": { "x": 0.0, "y": 0.0 },
+      "rotation": 0,
+      "transmit_power": 0.02
     }
   ],
-  
+
   "metadata": {
-    "author": "System",
-    "version": "1.0",
-    "tags": ["ultrasound", "medical", "imaging", "curved array"]
+    "author": "Medical Ultrasound Simulation",
+    "version": "1.1",
+    "tags": [
+      "ultrasound",
+      "medical imaging",
+      "curved array",
+      "beamforming",
+      "B-mode"
+    ]
   }
 }
-

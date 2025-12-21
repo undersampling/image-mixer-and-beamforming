@@ -1,55 +1,66 @@
 {
   "id": "tumor_ablation",
   "name": "HIFU Tumor Ablation",
-  "description": "High Intensity Focused Ultrasound system with multiple arrays converging on a tumor target for non-invasive ablation.",
+  "description": "High Intensity Focused Ultrasound system using dual curved phased arrays for non-invasive tumor ablation.",
   "category": "medical",
-  
+
   "medium": {
     "name": "soft_tissue",
-    "speed": 1540
+    "speed": 1540,
+    "density": 1000,
+    "attenuation": 0.7
   },
-  
+
   "visualization": {
-    "x_range": [-10, 10],
-    "y_range": [0, 10],
-    "resolution": 150
+    "x_range": [-0.06, 0.06],
+    "y_range": [0.0, 0.10],
+    "resolution": 300
   },
-  
+
   "arrays": [
     {
       "id": "left_transducer",
-      "name": "Left Transducer",
+      "name": "Left HIFU Transducer",
       "type": "curved",
-      "num_elements": 48,
-      "element_spacing": 0.002,
-      "curvature_radius": 0.06,
-      "arc_angle": 40,
+      "num_elements": 64,
+      "element_spacing": 0.0015,
+      "curvature_radius": 0.08,
+      "arc_angle": 60,
       "frequencies": [1000000],
       "steering_angle": 0,
-      "focus_point": {"x": 0, "y": 0.07},
-      "position": {"x": -0.04, "y": 0},
-      "rotation": 25
+      "focus_point": { "x": 0.0, "y": 0.07 },
+      "position": { "x": -0.05, "y": 0.0 },
+      "rotation": 30,
+      "power_per_element": 5.0
     },
     {
       "id": "right_transducer",
-      "name": "Right Transducer",
+      "name": "Right HIFU Transducer",
       "type": "curved",
-      "num_elements": 48,
-      "element_spacing": 0.002,
-      "curvature_radius": 0.06,
-      "arc_angle": 40,
+      "num_elements": 64,
+      "element_spacing": 0.0015,
+      "curvature_radius": 0.08,
+      "arc_angle": 60,
       "frequencies": [1000000],
       "steering_angle": 0,
-      "focus_point": {"x": 0, "y": 0.07},
-      "position": {"x": 0.04, "y": 0},
-      "rotation": -25
+      "focus_point": { "x": 0.0, "y": 0.07 },
+      "position": { "x": 0.05, "y": 0.0 },
+      "rotation": -30,
+      "power_per_element": 5.0
     }
   ],
-  
+
   "metadata": {
-    "author": "System",
-    "version": "1.0",
-    "tags": ["HIFU", "tumor", "ablation", "multiple arrays", "medical"]
+    "author": "Medical Ultrasound Simulation",
+    "version": "1.1",
+    "tags": [
+      "HIFU",
+      "tumor ablation",
+      "phased array",
+      "beamforming",
+      "bioheat",
+      "medical ultrasound"
+    ]
   }
 }
 

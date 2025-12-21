@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSimulator } from "../../../context/SimulatorContext";
 import { Card } from "../../common/Card";
 import { Button } from "../../common/Button";
@@ -27,31 +27,28 @@ export function ArrayManager() {
       focus_point: null,
       position: { x: 0, y: 0 },
       rotation: 0,
+      curvature_radius: 0.1,
+      arc_angle: 60
     });
     setExpandedArray(newId);
   };
 
-  const handleArrayChange = (arrayId, updates) => {
-    updateArray(arrayId, updates);
-  };
-
   return (
     <Card title="Phased Arrays" defaultExpanded={true}>
-      {/* Sticky Progress Bar Container - Always visible */}
       <div className="calculation-progress-sticky">
         <div className="calculation-progress-section">
           <h4 className="progress-label">Processing</h4>
           <div className="calculation-progress-container">
             <div 
               className="calculation-progress-bar" 
-              style={{ width: `${calculationProgress}%` }}
+              style={{ 
+                width: isCalculating ? '100%' : '0%', 
+                opacity: isCalculating ? 1 : 0,
+                transition: 'opacity 0.2s' 
+              }}
             />
             <span className="calculation-progress-text">
-              {isCalculating 
-                ? `Updating... ${calculationProgress}%` 
-                : calculationProgress === 100 
-                  ? 'Complete!' 
-                  : 'Ready'}
+              {isCalculating ? 'Updating...' : 'Ready'}
             </span>
           </div>
         </div>
@@ -66,22 +63,15 @@ export function ArrayManager() {
       </Button>
 
       {config.arrays.map((array, idx) => (
-        <ArrayConfig
+        <RealTimeArrayConfig
           key={array.id}
           array={array}
           index={idx}
           isExpanded={expandedArray === array.id}
-          onExpand={() =>
-            setExpandedArray(expandedArray === array.id ? null : array.id)
-          }
-          onChange={(updates) => handleArrayChange(array.id, updates)}
+          onExpand={() => setExpandedArray(expandedArray === array.id ? null : array.id)}
+          onChange={(updates) => updateArray(array.id, updates)}
           onDelete={() => {
-            if (window.confirm("Delete this array?")) {
-              removeArray(array.id);
-              if (expandedArray === array.id) {
-                setExpandedArray(null);
-              }
-            }
+            if (window.confirm("Delete this array?")) removeArray(array.id);
           }}
         />
       ))}
@@ -89,7 +79,7 @@ export function ArrayManager() {
   );
 }
 
-// Frequency unit options and conversion multipliers
+// Frequency unit options
 const FREQUENCY_UNITS = [
   { value: "Hz", label: "Hz", multiplier: 1 },
   { value: "kHz", label: "kHz", multiplier: 1e3 },
@@ -97,31 +87,57 @@ const FREQUENCY_UNITS = [
   { value: "GHz", label: "GHz", multiplier: 1e9 },
 ];
 
-function ArrayConfig({
-  array,
-  index,
-  isExpanded,
-  onExpand,
-  onChange,
-  onDelete,
-}) {
+// --- ULTRA-FAST REAL-TIME COMPONENT ---
+function RealTimeArrayConfig({ array, index, isExpanded, onExpand, onChange, onDelete }) {
+  // 1. Local state for instant slider movement
+  const [localArray, setLocalArray] = useState(array);
+  const requestRef = useRef();
+  
+  // 2. Sync if backend updates externally
+  useEffect(() => {
+    setLocalArray(array);
+  }, [array]);
+
+  // 3. The "No Delay" Updater
+  const updateImmediately = useCallback((updates) => {
+    setLocalArray(prev => {
+      const newState = { ...prev, ...updates };
+      
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
+      }
+
+      requestRef.current = requestAnimationFrame(() => {
+        onChange(newState);
+      });
+      
+      return newState;
+    });
+  }, [onChange]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
+  }, []);
+
+  const [useFocus, setUseFocus] = useState(array.focus_point !== null);
+  
   const [freqMode, setFreqMode] = useState(
     Array.isArray(array.frequencies) && array.frequencies.length > 1
       ? "range"
       : "individual"
   );
-  const [useFocus, setUseFocus] = useState(array.focus_point !== null);
 
   const handleFreqModeChange = (mode) => {
     setFreqMode(mode);
     if (mode === "individual") {
-      onChange({
-        frequencies:
-          array.frequencies.length > 0 ? [array.frequencies[0]] : [5000],
-      });
+      const first = localArray.frequencies.length > 0 ? localArray.frequencies[0] : 5000;
+      updateImmediately({ frequencies: [first] });
     } else {
-      const first = array.frequencies[0] || 1000;
-      onChange({ frequencies: [first, first + 1000, first + 2000] });
+      const first = localArray.frequencies[0] || 1000;
+      updateImmediately({ frequencies: [first, first + 1000, first + 2000] });
     }
   };
 
@@ -129,15 +145,11 @@ function ArrayConfig({
     <div className="array-config">
       <div className="array-header" onClick={onExpand}>
         <span>
-          {isExpanded ? "▼" : "►"} Array {index + 1}: ({array.type},
-          {array.num_elements}elements)
+          {isExpanded ? "▼" : "►"} {localArray.name} ({localArray.type}, {localArray.num_elements} elements)
         </span>
         <button
           className="btn btn-danger"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
           style={{ padding: "0.25rem 0.5rem", fontSize: "0.875rem" }}
         >
           🗑
@@ -149,8 +161,22 @@ function ArrayConfig({
           <div className="section-title">Geometry</div>
           <Dropdown
             label="Type"
-            value={array.type}
-            onChange={(val) => onChange({ type: val })}
+            value={localArray.type}
+            onChange={(val) => {
+                // --- FIX FOR 5G SCENARIO ---
+                // When switching to 'curved', check if radius/angle are missing (0 or null).
+                // If so, force-send the defaults (0.1m, 60deg) immediately.
+                const updates = { type: val };
+                if (val === 'curved') {
+                    if (!localArray.curvature_radius || localArray.curvature_radius < 0.001) {
+                        updates.curvature_radius = 0.1;
+                    }
+                    if (!localArray.arc_angle || localArray.arc_angle < 1) {
+                        updates.arc_angle = 60;
+                    }
+                }
+                updateImmediately(updates);
+            }}
             options={[
               { value: "linear", label: "Linear" },
               { value: "curved", label: "Curved" },
@@ -159,40 +185,31 @@ function ArrayConfig({
 
           <Slider
             label="Elements"
-            value={array.num_elements}
-            onChange={(val) => onChange({ num_elements: Math.round(val) })}
-            min={1}
-            max={128}
-            step={1}
+            value={localArray.num_elements}
+            onChange={(val) => updateImmediately({ num_elements: Math.round(val) })}
+            min={1} max={128} step={1}
           />
 
           <NumberInput
             label="Element Spacing (m)"
-            value={array.element_spacing}
-            onChange={(val) => onChange({ element_spacing: val })}
-            min={0.00001}
-            max={1}
-            step={0.001}
+            value={localArray.element_spacing}
+            onChange={(val) => updateImmediately({ element_spacing: val })}
+            min={0.00001} max={1} step={0.001}
           />
 
-          {array.type === "curved" && (
+          {localArray.type === "curved" && (
             <>
               <NumberInput
                 label="Curvature Radius (m)"
-                value={array.curvature_radius || 0.1}
-                onChange={(val) => onChange({ curvature_radius: val })}
-                min={0.01}
-                max={1}
-                step={0.01}
+                value={localArray.curvature_radius || 0.1}
+                onChange={(val) => updateImmediately({ curvature_radius: val })}
+                min={0.01} max={10} step={0.01}
               />
               <Slider
                 label="Arc Angle"
-                value={array.arc_angle || 60}
-                onChange={(val) => onChange({ arc_angle: val })}
-                min={10}
-                max={180}
-                step={1}
-                unit="°"
+                value={localArray.arc_angle || 60}
+                onChange={(val) => updateImmediately({ arc_angle: val })}
+                min={10} max={360} step={1} unit="°"
               />
             </>
           )}
@@ -200,18 +217,14 @@ function ArrayConfig({
           <div className="section-title">Frequencies</div>
           <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
             <button
-              className={`btn ${
-                freqMode === "individual" ? "btn-primary" : "btn-secondary"
-              }`}
+              className={`btn ${freqMode === "individual" ? "btn-primary" : "btn-secondary"}`}
               onClick={() => handleFreqModeChange("individual")}
               style={{ flex: 1 }}
             >
               Individual
             </button>
             <button
-              className={`btn ${
-                freqMode === "range" ? "btn-primary" : "btn-secondary"
-              }`}
+              className={`btn ${freqMode === "range" ? "btn-primary" : "btn-secondary"}`}
               onClick={() => handleFreqModeChange("range")}
               style={{ flex: 1 }}
             >
@@ -221,21 +234,13 @@ function ArrayConfig({
 
           {freqMode === "individual" ? (
             <FrequencyList
-              frequencies={
-                Array.isArray(array.frequencies)
-                  ? array.frequencies
-                  : [array.frequencies]
-              }
-              onChange={(freqs) => onChange({ frequencies: freqs })}
+              frequencies={Array.isArray(localArray.frequencies) ? localArray.frequencies : [localArray.frequencies]}
+              onChange={(freqs) => updateImmediately({ frequencies: freqs })}
             />
           ) : (
             <FrequencyRange
-              frequencies={
-                Array.isArray(array.frequencies)
-                  ? array.frequencies
-                  : [array.frequencies]
-              }
-              onChange={(freqs) => onChange({ frequencies: freqs })}
+              frequencies={Array.isArray(localArray.frequencies) ? localArray.frequencies : [localArray.frequencies]}
+              onChange={(freqs) => updateImmediately({ frequencies: freqs })}
             />
           )}
 
@@ -245,72 +250,55 @@ function ArrayConfig({
             checked={useFocus}
             onChange={(checked) => {
               setUseFocus(checked);
-              if (!checked) {
-                onChange({ focus_point: null });
-              } else {
-                onChange({ focus_point: { x: 0, y: 1 } });
-              }
+              updateImmediately({ focus_point: checked ? { x: 0, y: 1 } : null });
             }}
           />
 
           {!useFocus ? (
             <Slider
               label="Steering Angle"
-              value={array.steering_angle || 0}
-              onChange={(val) => onChange({ steering_angle: val })}
-              min={-90}
-              max={90}
-              step={1}
-              unit="°"
+              value={localArray.steering_angle || 0}
+              onChange={(val) => updateImmediately({ steering_angle: val })}
+              min={-90} max={90} step={1} unit="°"
             />
           ) : (
             <>
-              <NumberInput
-                label="Focus X (m)"
-                value={array.focus_point?.x || 0}
-                onChange={(val) =>
-                  onChange({ focus_point: { ...array.focus_point, x: val } })
-                }
-                step={0.01}
-              />
-              <NumberInput
-                label="Focus Y (m)"
-                value={array.focus_point?.y || 1}
-                onChange={(val) =>
-                  onChange({ focus_point: { ...array.focus_point, y: val } })
-                }
-                step={0.01}
-              />
+              <div style={{display:'flex', gap:'5px'}}>
+                <NumberInput
+                  label="Focus X (m)"
+                  value={localArray.focus_point?.x || 0}
+                  onChange={(val) => updateImmediately({ focus_point: { ...localArray.focus_point, x: val } })}
+                  step={0.01}
+                />
+                <NumberInput
+                  label="Focus Y (m)"
+                  value={localArray.focus_point?.y || 1}
+                  onChange={(val) => updateImmediately({ focus_point: { ...localArray.focus_point, y: val } })}
+                  step={0.01}
+                />
+              </div>
             </>
           )}
 
           <div className="section-title">Array Position</div>
-          
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <NumberInput
               label="X (m)"
-              value={array.position?.x || 0}
-              onChange={(val) =>
-                onChange({ position: { ...array.position, x: val } })
-              }
+              value={localArray.position?.x || 0}
+              onChange={(val) => updateImmediately({ position: { ...localArray.position, x: val } })}
               step={0.01}
             />
             <NumberInput
               label="Y (m)"
-              value={array.position?.y || 0}
-              onChange={(val) =>
-                onChange({ position: { ...array.position, y: val } })
-              }
+              value={localArray.position?.y || 0}
+              onChange={(val) => updateImmediately({ position: { ...localArray.position, y: val } })}
               step={0.01}
             />
             <NumberInput
               label="Rotation"
-              value={array.rotation || 0}
-              onChange={(val) => onChange({ rotation: val })}
-              min={-180}
-              max={180}
-              step={1}
-              unit="°"
+              value={localArray.rotation || 0}
+              onChange={(val) => updateImmediately({ rotation: val })}
+              min={-180} max={180} step={1} unit="°"
             />
           </div>
         </div>
@@ -319,37 +307,31 @@ function ArrayConfig({
   );
 }
 
-function FrequencyList({ frequencies, onChange }) {
-  // State to track the unit for each frequency
-  const [freqUnits, setFreqUnits] = useState(() => 
-    frequencies.map(() => "Hz")
-  );
+// --- FREQUENCY COMPONENTS ---
 
-  // Sync units array if frequencies change externally
+function FrequencyList({ frequencies, onChange }) {
+  const [freqUnits, setFreqUnits] = useState(() => frequencies.map(() => "Hz"));
+
   useEffect(() => {
     if (freqUnits.length !== frequencies.length) {
       setFreqUnits(frequencies.map((_, i) => freqUnits[i] || "Hz"));
     }
   }, [frequencies.length]);
 
-  // Helper to get multiplier for a unit
   const getMultiplier = (unit) => {
     const unitObj = FREQUENCY_UNITS.find((u) => u.value === unit);
     return unitObj ? unitObj.multiplier : 1;
   };
 
-  // Convert Hz value to display value based on unit
   const toDisplayValue = (hzValue, unit) => hzValue / getMultiplier(unit);
-  // Convert display value back to Hz
   const toHzValue = (displayValue, unit) => displayValue * getMultiplier(unit);
 
-  // Dynamic step based on unit
   const getStep = (unit) => {
     const multiplier = getMultiplier(unit);
-    if (multiplier >= 1e9) return 0.1;  // GHz
-    if (multiplier >= 1e6) return 1;    // MHz
-    if (multiplier >= 1e3) return 10;   // kHz
-    return 100;                          // Hz
+    if (multiplier >= 1e9) return 0.1;
+    if (multiplier >= 1e6) return 1;
+    if (multiplier >= 1e3) return 10;
+    return 100;
   };
 
   const updateFreq = (index, displayValue) => {
@@ -365,7 +347,6 @@ function FrequencyList({ frequencies, onChange }) {
   };
 
   const addFreq = () => {
-    // Add new frequency with default unit Hz
     const lastFreq = frequencies.length > 0 ? frequencies[frequencies.length - 1] : 5000;
     onChange([...frequencies, lastFreq + 1000]);
     setFreqUnits([...freqUnits, "Hz"]);
@@ -383,38 +364,21 @@ function FrequencyList({ frequencies, onChange }) {
   return (
     <div>
       {frequencies.map((freq, idx) => (
-        <div
-          key={idx}
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            marginBottom: "0.5rem",
-            alignItems: "flex-end",
-          }}
-        >
+        <div key={idx} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem", alignItems: "flex-end" }}>
           <NumberInput
             label={`f${idx + 1}`}
             value={toDisplayValue(freq, freqUnits[idx] || "Hz")}
             onChange={(val) => updateFreq(idx, val)}
-            min={0.001}
-            max={100000}
-            step={getStep(freqUnits[idx] || "Hz")}
+            min={0.001} max={100000000000} step={getStep(freqUnits[idx] || "Hz")}
           />
           <select
             className="dropdown"
             value={freqUnits[idx] || "Hz"}
             onChange={(e) => updateUnit(idx, e.target.value)}
-            style={{ 
-              padding: "0.5rem",
-              minWidth: "20px",
-              height: "38px",
-              marginBottom: "var(--spacing-md)"
-            }}
+            style={{ padding: "0.5rem", minWidth: "20px", height: "38px", marginBottom: "var(--spacing-md)" }}
           >
             {FREQUENCY_UNITS.map((u) => (
-              <option key={u.value} value={u.value}>
-                {u.label}
-              </option>
+              <option key={u.value} value={u.value}>{u.label}</option>
             ))}
           </select>
           <button
@@ -427,9 +391,7 @@ function FrequencyList({ frequencies, onChange }) {
           </button>
         </div>
       ))}
-      <Button variant="secondary" onClick={addFreq} style={{ width: "100%" }}>
-        + Add Frequency
-      </Button>
+      <Button variant="secondary" onClick={addFreq} style={{ width: "100%" }}>+ Add Frequency</Button>
     </div>
   );
 }
@@ -437,17 +399,12 @@ function FrequencyList({ frequencies, onChange }) {
 function FrequencyRange({ frequencies, onChange }) {
   const [unit, setUnit] = useState("Hz");
 
-  // Helper to get multiplier for a unit
   const getMultiplier = (u) => {
     const unitObj = FREQUENCY_UNITS.find((uo) => uo.value === u);
     return unitObj ? unitObj.multiplier : 1;
   };
-
   const multiplier = getMultiplier(unit);
-
-  // Convert Hz value to display value based on unit
   const toDisplayValue = (hzValue) => hzValue / multiplier;
-  // Convert display value back to Hz
   const toHzValue = (displayValue) => displayValue * multiplier;
 
   const minFreq = Math.min(...frequencies);
@@ -466,12 +423,11 @@ function FrequencyRange({ frequencies, onChange }) {
     onChange(newFreqs);
   };
 
-  // Dynamic step based on unit
   const getStep = () => {
-    if (multiplier >= 1e9) return 0.1;  // GHz
-    if (multiplier >= 1e6) return 1;    // MHz
-    if (multiplier >= 1e3) return 10;   // kHz
-    return 100;                          // Hz
+    if (multiplier >= 1e9) return 0.1;
+    if (multiplier >= 1e6) return 1;
+    if (multiplier >= 1e3) return 10;
+    return 100;
   };
 
   return (
@@ -485,9 +441,7 @@ function FrequencyRange({ frequencies, onChange }) {
           style={{ width: "100%" }}
         >
           {FREQUENCY_UNITS.map((u) => (
-            <option key={u.value} value={u.value}>
-              {u.label}
-            </option>
+            <option key={u.value} value={u.value}>{u.label}</option>
           ))}
         </select>
       </div>
@@ -495,33 +449,21 @@ function FrequencyRange({ frequencies, onChange }) {
         label={`From (${unit})`}
         value={toDisplayValue(minFreq)}
         onChange={(val) => updateRange(val, toDisplayValue(maxFreq), toDisplayValue(step))}
-        min={0.001}
-        max={100000}
-        step={getStep()}
+        min={0.001} max={100000000000} step={getStep()}
       />
       <NumberInput
         label={`To (${unit})`}
         value={toDisplayValue(maxFreq)}
         onChange={(val) => updateRange(toDisplayValue(minFreq), val, toDisplayValue(step))}
-        min={0.001}
-        max={100000}
-        step={getStep()}
+        min={0.001} max={100000000000} step={getStep()}
       />
       <NumberInput
         label={`Step (${unit})`}
         value={toDisplayValue(step)}
         onChange={(val) => updateRange(toDisplayValue(minFreq), toDisplayValue(maxFreq), val)}
-        min={0.001}
-        max={100000}
-        step={getStep()}
+        min={0.001} max={100000000000} step={getStep()}
       />
-      <div
-        style={{
-          marginTop: "0.5rem",
-          color: "var(--color-text-secondary)",
-          fontSize: "0.875rem",
-        }}
-      >
+      <div style={{ marginTop: "0.5rem", color: "var(--color-text-secondary)", fontSize: "0.875rem" }}>
         Count: {frequencies.length} frequencies
       </div>
     </div>

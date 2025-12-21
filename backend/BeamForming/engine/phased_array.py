@@ -102,7 +102,7 @@ class PhasedArray:
             (self._element_positions[:, 0] - focus_x) ** 2 +
             (self._element_positions[:, 1] - focus_y) ** 2
         )
-        self._element_phases = -k * distances
+        self._element_phases = +k * distances
 
     # --- NEW OPTIMIZED METHODS ---
 
