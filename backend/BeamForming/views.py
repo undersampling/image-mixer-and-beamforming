@@ -13,6 +13,7 @@ from .engine.media_config import get_media_list
 
 @csrf_exempt
 @require_http_methods(["POST"])
+
 def calculate(request):
     """Calculate beamforming results."""
     try:

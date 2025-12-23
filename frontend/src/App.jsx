@@ -24,7 +24,7 @@ function App() {
               </MainLayout>
             }
           />
-          <Route path="/" element={<Navigate to="/beamforming" replace />} />
+          <Route path="/" element={<Navigate to="/mixer" replace />} />
         </Routes>
       </BrowserRouter>
     </SimulatorProvider>
